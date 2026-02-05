@@ -54,8 +54,13 @@ app.get('/progress', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/progress.html'));
 });
 
-// Start server
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`FluentBuddy server is running on http://localhost:${PORT}`);
-  console.log(`Network access: http://192.168.87.38:${PORT}`);
-});
+// Export for Vercel serverless
+module.exports = app;
+
+// Start server (only if not in Vercel)
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`FluentBuddy server is running on http://localhost:${PORT}`);
+    console.log(`Network access: http://192.168.87.38:${PORT}`);
+  });
+}
