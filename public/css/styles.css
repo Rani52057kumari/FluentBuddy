@@ -102,6 +102,17 @@ body {
     align-items: center;
 }
 
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.logo-icon {
+    font-size: 28px;
+    line-height: 1;
+}
+
 .logo h1, .logo h2 {
     color: var(--primary-color);
     font-size: 24px;
