@@ -54,6 +54,10 @@ app.get('/progress', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/progress.html'));
 });
 
+app.get('/profile', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/profile.html'));
+});
+
 // Export for Vercel serverless
 module.exports = app;
 

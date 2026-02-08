@@ -14,6 +14,8 @@ function initializeDatabase() {
       email TEXT UNIQUE NOT NULL,
       password TEXT NOT NULL,
       level TEXT DEFAULT 'beginner',
+      profile_photo TEXT DEFAULT NULL,
+      bio TEXT DEFAULT NULL,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`);
 

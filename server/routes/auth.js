@@ -105,7 +105,7 @@ function verifyToken(req, res, next) {
 
 // Get user profile
 router.get('/profile', verifyToken, (req, res) => {
-  db.get('SELECT id, username, email, level, created_at FROM users WHERE id = ?', [req.userId], (err, user) => {
+  db.get('SELECT id, username, email, level, profile_photo, bio, created_at FROM users WHERE id = ?', [req.userId], (err, user) => {
     if (err) {
       return res.status(500).json({ error: 'Server error' });
     }
@@ -114,6 +114,31 @@ router.get('/profile', verifyToken, (req, res) => {
     }
     res.json(user);
   });
+});
+
+// Update user profile
+router.put('/profile', verifyToken, (req, res) => {
+  const { username, bio, profile_photo } = req.body;
+  
+  db.run(
+    'UPDATE users SET username = ?, bio = ?, profile_photo = ? WHERE id = ?',
+    [username, bio, profile_photo, req.userId],
+    function(err) {
+      if (err) {
+        if (err.message.includes('UNIQUE')) {
+          return res.status(400).json({ error: 'Username already exists' });
+        }
+        return res.status(500).json({ error: 'Error updating profile' });
+      }
+      
+      db.get('SELECT id, username, email, level, profile_photo, bio, created_at FROM users WHERE id = ?', [req.userId], (err, user) => {
+        if (err) {
+          return res.status(500).json({ error: 'Server error' });
+        }
+        res.json({ message: 'Profile updated successfully', user });
+      });
+    }
+  );
 });
 
 module.exports = router;
