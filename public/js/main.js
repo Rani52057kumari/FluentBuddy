@@ -11,6 +11,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const loginBtn = document.getElementById('loginBtn');
     const signupBtn = document.getElementById('signupBtn');
     const getStartedBtn = document.getElementById('getStartedBtn');
+    const sendLoginOtpBtn = document.getElementById('sendLoginOtpBtn');
+    const sendSignupOtpBtn = document.getElementById('sendSignupOtpBtn');
     
     // Get close buttons
     const closeBtns = document.getElementsByClassName('close');
@@ -68,25 +70,62 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+    sendLoginOtpBtn.addEventListener('click', async () => {
+        const identifier = document.getElementById('loginIdentifier').value;
+        if (!identifier.trim()) {
+            alert('Please enter your email or phone number first.');
+            return;
+        }
+
+        const result = await sendOtpRequest(identifier, 'login');
+        if (result.success) {
+            alert(result.message || 'OTP sent successfully.');
+        } else {
+            alert(result.error || 'Unable to send OTP.');
+        }
+    });
+
+    sendSignupOtpBtn.addEventListener('click', async () => {
+        const identifier = document.getElementById('signupIdentifier').value;
+        if (!identifier.trim()) {
+            alert('Please enter your email or phone number first.');
+            return;
+        }
+
+        const result = await sendOtpRequest(identifier, 'signup');
+        if (result.success) {
+            alert(result.message || 'OTP sent successfully.');
+        } else {
+            alert(result.error || 'Unable to send OTP.');
+        }
+    });
+
     // Handle login form submission
     loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         
-        const email = document.getElementById('loginEmail').value;
+        const identifier = document.getElementById('loginIdentifier').value;
         const password = document.getElementById('loginPassword').value;
+        const otp = document.getElementById('loginOtp').value;
 
-        const result = await login(email, password);
+        if (!otp.trim()) {
+            alert('Please enter the OTP received via email or phone before logging in.');
+            return;
+        }
+
+        const result = await login(identifier, password, otp);
         
         if (result.success) {
             window.location.href = '/dashboard';
         } else {
-            if (result.error.includes('Invalid credentials')) {
+            const errorMessage = result.error || result.message || 'Something went wrong.';
+            if (errorMessage.includes('No account found')) {
                 alert('❌ Account not found!\n\n' + 
-                      'This email is not registered yet.\n' + 
+                      'This email/phone is not registered yet.\n' + 
                       'Please click "Sign up" to create an account first.\n\n' +
                       'पहले Sign Up करें!');
             } else {
-                alert(result.error);
+                alert(errorMessage);
             }
         }
     });
@@ -96,21 +135,28 @@ document.addEventListener('DOMContentLoaded', function() {
         e.preventDefault();
         
         const username = document.getElementById('signupUsername').value;
-        const email = document.getElementById('signupEmail').value;
+        const identifier = document.getElementById('signupIdentifier').value;
         const password = document.getElementById('signupPassword').value;
+        const otp = document.getElementById('signupOtp').value;
         const level = document.getElementById('signupLevel').value;
 
-        const result = await register(username, email, password, level);
+        if (!otp.trim()) {
+            alert('Please enter the OTP received via email or phone before creating your account.');
+            return;
+        }
+
+        const result = await register(username, identifier, password, level, otp);
         
         if (result.success) {
             window.location.href = '/dashboard';
         } else {
-            if (result.error.includes('already exists')) {
-                alert('✅ Good news! This email is already registered.\n\n' + 
+            const errorMessage = result.error || result.message || 'Something went wrong.';
+            if (errorMessage.includes('already exists')) {
+                alert('✅ Good news! This email or phone is already registered.\n\n' + 
                       'Please use "Login" button to sign in.\n\n' +
-                      'Login button पर click करें!');
+                      'Click the Login button!');
             } else {
-                alert(result.error);
+                alert(errorMessage);
             }
         }
     });
@@ -145,31 +191,35 @@ function togglePassword(inputId) {
 }
 
 // Google Sign In
-function loginWithGoogle() {
-    // Simulate Google OAuth - In production, integrate with Google OAuth
+async function loginWithGoogle() {
     const googleEmail = prompt('Enter your Google email:');
     if (!googleEmail) return;
-    
-    const password = 'google_' + Math.random().toString(36).substring(7);
-    
-    // Try to login first, if fails then register
-    login(googleEmail, password).then(result => {
-        if (result.success) {
-            window.location.href = '/dashboard';
-        } else {
-            // Auto register with Google email
-            const username = googleEmail.split('@')[0];
-            register(username, googleEmail, password, 'beginner').then(regResult => {
-                if (regResult.success) {
-                    window.location.href = '/dashboard';
-                } else {
-                    alert('Error: ' + regResult.error);
-                }
-            });
+
+    try {
+        const response = await fetch(`${API_URL}/auth/google`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                email: googleEmail,
+                name: googleEmail.split('@')[0],
+                googleId: `google-demo-${Date.now()}`
+            })
+        });
+
+        const data = await response.json();
+        if (!response.ok) {
+            alert(data.message || 'Google login failed.');
+            return;
         }
-    });
+
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+        window.location.href = '/dashboard';
+    } catch (error) {
+        alert('Google login failed. Please try again.');
+    }
 }
 
-function signupWithGoogle() {
-    loginWithGoogle(); // Same flow for signup
+async function signupWithGoogle() {
+    return loginWithGoogle();
 }

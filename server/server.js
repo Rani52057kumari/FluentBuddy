@@ -1,14 +1,31 @@
+require('dotenv').config();
+
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const path = require('path');
-const authRoutes = require('./routes/auth');
+const mongoose = require('mongoose');
+const authRoutes = require('./routes/authRoutes');
 const exerciseRoutes = require('./routes/exercises');
 const progressRoutes = require('./routes/progress');
 const { initializeDatabase } = require('./database/db');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/fluentbuddy';
+
+const connectMongoDB = async () => {
+  try {
+    await mongoose.connect(MONGODB_URI, {
+      serverSelectionTimeoutMS: 5000,
+    });
+    console.log('MongoDB connected successfully');
+  } catch (error) {
+    console.error('MongoDB connection failed:', error.message);
+    console.error('Please start MongoDB locally or set MONGODB_URI in your environment.');
+    process.exit(1);
+  }
+};
 
 // Middleware
 app.use(cors({
@@ -21,7 +38,8 @@ app.use(bodyParser.urlencoded({ extended: true }));
 // Serve static files from public directory
 app.use(express.static(path.join(__dirname, '../public')));
 
-// Initialize database
+// Initialize databases
+connectMongoDB();
 initializeDatabase();
 
 // Routes
