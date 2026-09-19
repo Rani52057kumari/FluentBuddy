@@ -7,6 +7,8 @@ const path = require('path');
 const mongoose = require('mongoose');
 const authRoutes = require('./routes/authRoutes');
 const projectRoutes = require('./routes/projectRoutes');
+const noteRoutes = require('./routes/noteRoutes');
+const inviteRoutes = require('./routes/inviteRoutes');
 const aiRoutes = require('./routes/aiRoutes');
 const analyticsRoutes = require('./routes/analyticsRoutes');
 const practiceRoutes = require('./routes/practiceRoutes');
@@ -49,6 +51,8 @@ initializeDatabase();
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/projects', projectRoutes);
+app.use('/api/notes', noteRoutes);
+app.use('/api/invites', inviteRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/practice', practiceRoutes);

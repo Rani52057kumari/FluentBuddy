@@ -74,11 +74,40 @@
                 </div>
             </div>
         </section>
+
+        <section class="invites-section" id="invitesSection">
+            <h2>Invitations</h2>
+            <div class="invites-panel">
+                <ul id="invitesList" class="invites-list">
+                    <!-- invites will be injected here -->
+                </ul>
+            </div>
+        </section>
+
+        <section class="notes-section" id="notesSection">
+            <h2>Your Notes</h2>
+            <div class="notes-grid">
+                <div class="notes-panel">
+                    <form id="createNoteForm" class="note-form">
+                        <input id="noteTitle" placeholder="Note title" required />
+                        <textarea id="noteContent" placeholder="Write your note..."></textarea>
+                        <button type="submit" class="btn-module">Create Note</button>
+                    </form>
+                </div>
+                <div class="notes-panel">
+                    <ul id="notesList" class="notes-list">
+                        <!-- notes will be injected here -->
+                    </ul>
+                </div>
+            </div>
+        </section>
     </div>
     </main>
 
     <script src="js/auth.js"></script>
     <script src="js/layout.js"></script>
     <script src="js/dashboard.js"></script>
+    <script src="js/notes.js"></script>
+    <script src="js/invites.js"></script>
 </body>
 </html>
