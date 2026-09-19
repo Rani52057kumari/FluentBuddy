@@ -232,19 +232,11 @@
         }
     </style>
 </head>
-<body>
-    <nav class="navbar">
-        <div class="nav-container">
-            <a href="/" class="logo">FluentBuddy</a>
-            <ul class="nav-menu">
-                <li><a href="/dashboard">Dashboard</a></li>
-                <li><a href="/profile" class="active">Profile</a></li>
-                <li><a href="#" onclick="logout()">Logout</a></li>
-            </ul>
-        </div>
-    </nav>
+<body class="app-body">
+    <div id="app-layout" data-page="profile"></div>
 
-    <div class="profile-container">
+    <main class="page-shell">
+        <div class="profile-container">
         <div id="alertMessage" class="alert"></div>
 
         <div class="profile-header">
@@ -312,8 +304,10 @@
             </form>
         </div>
     </div>
+    </main>
 
     <script src="/js/auth.js"></script>
+    <script src="/js/layout.js"></script>
     <script src="/js/profile.js"></script>
 </body>
 </html>

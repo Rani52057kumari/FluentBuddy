@@ -30,6 +30,21 @@ const userSchema = new mongoose.Schema(
       },
       minlength: [8, 'Password must be at least 8 characters long'],
     },
+    bio: {
+      type: String,
+      default: '',
+      trim: true,
+    },
+    profilePhoto: {
+      type: String,
+      default: '',
+      trim: true,
+    },
+    englishLevel: {
+      type: String,
+      enum: ['Beginner', 'Intermediate', 'Advanced'],
+      default: 'Beginner',
+    },
     authProvider: {
       type: String,
       enum: ['local', 'google'],

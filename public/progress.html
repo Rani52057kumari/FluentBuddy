@@ -5,63 +5,84 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Progress - FluentBuddy</title>
     <link rel="stylesheet" href="css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body>
-    <nav class="dashboard-nav">
-        <div class="nav-container">
-            <div class="logo">
-                <h2>FluentBuddy</h2>
-            </div>
-            <div class="nav-links">
-                <a href="/dashboard">Dashboard</a>
-                <a href="/progress" class="active">My Progress</a>
-                <a href="/profile">Profile</a>
-                <span id="userDisplay" class="user-display"></span>
-                <button id="logoutBtn" class="btn-secondary">Logout</button>
-            </div>
-        </div>
-    </nav>
+<body class="app-body">
+    <div id="app-layout" data-page="progress"></div>
 
-    <div class="progress-container">
+    <main class="page-shell">
+        <div class="progress-container">
         <header class="progress-header">
             <h1>📊 My Progress</h1>
             <p>Track your English learning journey</p>
         </header>
 
-        <section class="progress-overview">
-            <div class="progress-card">
-                <h3>Overall Statistics</h3>
-                <div class="progress-stats">
-                    <div class="stat-item">
-                        <span class="stat-label">Total Exercises:</span>
-                        <span class="stat-value" id="totalExercises">0</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Average Score:</span>
-                        <span class="stat-value" id="averageScore">0%</span>
-                    </div>
+        <section class="summary-cards">
+            <div class="summary-card">
+                <div class="summary-icon">🧩</div>
+                <div class="summary-content">
+                    <p class="summary-label">Total Practice Sessions</p>
+                    <h3 id="totalSessions">0</h3>
                 </div>
             </div>
 
-            <div class="progress-card">
-                <h3>Performance by Type</h3>
-                <div id="performanceByType" class="performance-grid"></div>
+            <div class="summary-card">
+                <div class="summary-icon">📝</div>
+                <div class="summary-content">
+                    <p class="summary-label">Average Grammar Score</p>
+                    <h3 id="averageGrammarScore">0%</h3>
+                </div>
+            </div>
+
+            <div class="summary-card">
+                <div class="summary-icon">📚</div>
+                <div class="summary-content">
+                    <p class="summary-label">Average Vocabulary Score</p>
+                    <h3 id="averageVocabularyScore">0%</h3>
+                </div>
+            </div>
+
+            <div class="summary-card level-card">
+                <div class="summary-icon">🏅</div>
+                <div class="summary-content">
+                    <p class="summary-label">Current Level</p>
+                    <h3 id="currentEnglishLevel">Beginner</h3>
+                </div>
             </div>
         </section>
 
-        <section class="detailed-progress">
-            <h2>Recent Activities</h2>
-            <div class="filter-tabs">
-                <button class="filter-btn active" data-type="all">All</button>
-                <button class="filter-btn" data-type="speaking">Speaking</button>
-                <button class="filter-btn" data-type="writing">Writing</button>
-                <button class="filter-btn" data-type="reading">Reading</button>
+        <section class="analytics-grid">
+            <div class="panel chart-panel">
+                <div class="panel-header">
+                    <h2>Score Improvement</h2>
+                </div>
+                <canvas id="progressChart"></canvas>
             </div>
-            <div id="activityList" class="activity-timeline"></div>
+
+            <div class="panel recent-panel">
+                <div class="panel-header">
+                    <h2>Recent Activity</h2>
+                </div>
+                <div id="recentActivityContainer" class="activity-table-wrapper">
+                    <table class="activity-table">
+                        <thead>
+                            <tr>
+                                <th>Session</th>
+                                <th>Input</th>
+                                <th>AI Score</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody id="activityTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
         </section>
     </div>
+    </main>
 
     <script src="js/auth.js"></script>
+    <script src="js/layout.js"></script>
     <script src="js/progress.js"></script>
 </body>
 </html>

@@ -63,6 +63,26 @@ router.get('/overview', verifyToken, (req, res) => {
     });
 });
 
+// Get all progress entries for a user
+router.get('/user', verifyToken, (req, res) => {
+  const userId = req.userId;
+
+  db.all(
+    `SELECT p.*, e.title, e.level 
+     FROM progress p 
+     JOIN exercises e ON p.exercise_id = e.id 
+     WHERE p.user_id = ? 
+     ORDER BY p.completed_at DESC`,
+    [userId],
+    (err, rows) => {
+      if (err) {
+        return res.status(500).json({ error: 'Error fetching user progress' });
+      }
+      res.json(rows);
+    }
+  );
+});
+
 // Get progress by exercise type
 router.get('/:type', verifyToken, (req, res) => {
   const { type } = req.params;

@@ -21,9 +21,15 @@ const sanitizeUser = (user) => ({
   username: user.name,
   email: user.email || null,
   phone: user.phone || null,
+  bio: user.bio || '',
+  profilePhoto: user.profilePhoto || '',
+  profile_photo: user.profilePhoto || '',
+  englishLevel: user.englishLevel || 'Beginner',
+  level: user.englishLevel || 'Beginner',
   authProvider: user.authProvider,
   googleId: user.googleId || null,
   createdAt: user.createdAt,
+  created_at: user.createdAt,
 });
 
 const invalidEmailMessage = 'This email is invalid. Please enter a valid real email address.';
@@ -286,25 +292,18 @@ const registerUser = async (req, res) => {
   }
 };
 
-// @desc    Login a local user using email or phone + OTP
+// @desc    Login a local user using email or phone + password
 // @route   POST /api/auth/login
 // @access  Public
 const loginUser = async (req, res) => {
   try {
-    const { email, phone, password, otp } = req.body;
+    const { email, phone, password } = req.body;
     const identifier = resolveIdentifier(email, phone);
 
     if (!identifier || !password) {
       return res.status(400).json({
         success: false,
         message: 'Email or phone and password are required.',
-      });
-    }
-
-    if (!otp) {
-      return res.status(400).json({
-        success: false,
-        message: 'OTP is required before login.',
       });
     }
 
@@ -322,8 +321,6 @@ const loginUser = async (req, res) => {
       });
     }
 
-    await validateOtpCode(identifier.value, otp, 'login');
-
     const userQuery = identifier.type === 'email'
       ? { email: identifier.value }
       : { phone: identifier.value };
@@ -336,7 +333,8 @@ const loginUser = async (req, res) => {
       });
     }
 
-    if (user.authProvider === 'google') {
+    const isGoogleOnlyAccount = user.authProvider === 'google' && !user.password;
+    if (isGoogleOnlyAccount) {
       return res.status(401).json({
         success: false,
         message: "This account uses Google Sign-In. Please click 'Continue with Google'.",
@@ -491,6 +489,68 @@ const getMe = async (req, res) => {
   }
 };
 
+const getProfile = async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found.',
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      user: sanitizeUser(req.user),
+    });
+  } catch (error) {
+    console.error('Get profile error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Unable to fetch profile details.',
+    });
+  }
+};
+
+const updateProfile = async (req, res) => {
+  try {
+    const { username, bio, profilePhoto } = req.body;
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found.',
+      });
+    }
+
+    if (typeof username === 'string' && username.trim()) {
+      user.name = username.trim();
+    }
+
+    if (typeof bio === 'string') {
+      user.bio = bio.trim();
+    }
+
+    if (typeof profilePhoto === 'string') {
+      user.profilePhoto = profilePhoto.trim();
+    }
+
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: 'Profile updated successfully.',
+      user: sanitizeUser(user),
+    });
+  } catch (error) {
+    console.error('Update profile error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Unable to update profile.',
+    });
+  }
+};
+
 module.exports = {
   sendOtp,
   verifyOtp,
@@ -498,4 +558,6 @@ module.exports = {
   loginUser,
   googleAuth,
   getMe,
+  getProfile,
+  updateProfile,
 };

@@ -6,23 +6,11 @@
     <title>Dashboard - FluentBuddy</title>
     <link rel="stylesheet" href="css/styles.css">
 </head>
-<body>
-    <nav class="dashboard-nav">
-        <div class="nav-container">
-            <div class="logo">
-                <h2>FluentBuddy</h2>
-            </div>
-            <div class="nav-links">
-                <a href="/dashboard" class="active">Dashboard</a>
-                <a href="/progress">My Progress</a>
-                <a href="/profile">Profile</a>
-                <span id="userDisplay" class="user-display"></span>
-                <button id="logoutBtn" class="btn-secondary">Logout</button>
-            </div>
-        </div>
-    </nav>
+<body class="app-body">
+    <div id="app-layout" data-page="dashboard"></div>
 
-    <div class="dashboard-container">
+    <main class="page-shell">
+        <div class="dashboard-container">
         <header class="dashboard-header">
             <h1>Welcome, <span id="username"></span>!</h1>
             <p class="subtitle">Choose an activity to practice your English skills</p>
@@ -55,7 +43,7 @@
         <section class="practice-modules">
             <h2>Practice Modules</h2>
             <div class="modules-grid">
-                <div class="module-card" onclick="window.location.href='/speaking'">
+                <div class="module-card" onclick="window.location.href='/practice?tab=speaking'">
                     <div class="module-icon">🎤</div>
                     <h3>Speaking Practice</h3>
                     <p>Improve pronunciation and fluency with interactive speaking exercises</p>
@@ -65,7 +53,7 @@
                     </div>
                 </div>
 
-                <div class="module-card" onclick="window.location.href='/writing'">
+                <div class="module-card" onclick="window.location.href='/practice?tab=writing'">
                     <div class="module-icon">✍️</div>
                     <h3>Writing Practice</h3>
                     <p>Enhance your writing skills with structured exercises and feedback</p>
@@ -75,7 +63,7 @@
                     </div>
                 </div>
 
-                <div class="module-card" onclick="window.location.href='/reading'">
+                <div class="module-card" onclick="window.location.href='/practice?tab=reading'">
                     <div class="module-icon">📖</div>
                     <h3>Reading Comprehension</h3>
                     <p>Build understanding with level-appropriate reading passages</p>
@@ -86,16 +74,11 @@
                 </div>
             </div>
         </section>
-
-        <section class="recent-activity">
-            <h2>Recent Activity</h2>
-            <div id="recentActivityList" class="activity-list">
-                <p class="no-activity">No recent activity. Start practicing to see your progress!</p>
-            </div>
-        </section>
     </div>
+    </main>
 
     <script src="js/auth.js"></script>
+    <script src="js/layout.js"></script>
     <script src="js/dashboard.js"></script>
 </body>
 </html>

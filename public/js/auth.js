@@ -81,7 +81,7 @@ async function verifyOtpRequest(identifier, otp, purpose) {
 }
 
 // Login function
-async function login(identifier, password, otp) {
+async function login(identifier, password) {
     try {
         const normalized = normalizeIdentifier(identifier);
         if (normalized.error) {
@@ -93,7 +93,7 @@ async function login(identifier, password, otp) {
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ ...normalized, password, otp })
+            body: JSON.stringify({ ...normalized, password })
         });
 
         const data = await response.json();

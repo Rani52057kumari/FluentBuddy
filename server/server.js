@@ -6,6 +6,10 @@ const bodyParser = require('body-parser');
 const path = require('path');
 const mongoose = require('mongoose');
 const authRoutes = require('./routes/authRoutes');
+const projectRoutes = require('./routes/projectRoutes');
+const aiRoutes = require('./routes/aiRoutes');
+const analyticsRoutes = require('./routes/analyticsRoutes');
+const practiceRoutes = require('./routes/practiceRoutes');
 const exerciseRoutes = require('./routes/exercises');
 const progressRoutes = require('./routes/progress');
 const { initializeDatabase } = require('./database/db');
@@ -44,6 +48,10 @@ initializeDatabase();
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/projects', projectRoutes);
+app.use('/api/ai', aiRoutes);
+app.use('/api/analytics', analyticsRoutes);
+app.use('/api/practice', practiceRoutes);
 app.use('/api/exercises', exerciseRoutes);
 app.use('/api/progress', progressRoutes);
 
@@ -54,6 +62,10 @@ app.get('/', (req, res) => {
 
 app.get('/dashboard', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/dashboard.html'));
+});
+
+app.get('/practice', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/practice.html'));
 });
 
 app.get('/speaking', (req, res) => {

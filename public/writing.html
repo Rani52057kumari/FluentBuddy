@@ -6,27 +6,92 @@
     <title>Writing Practice - FluentBuddy</title>
     <link rel="stylesheet" href="css/styles.css">
 </head>
-<body>
-    <nav class="dashboard-nav">
-        <div class="nav-container">
-            <div class="logo">
-                <h2>FluentBuddy</h2>
-            </div>
-            <div class="nav-links">
-                <a href="/dashboard">Dashboard</a>
-                <a href="/progress">My Progress</a>
-                <a href="/profile">Profile</a>
-                <span id="userDisplay" class="user-display"></span>
-                <button id="logoutBtn" class="btn-secondary">Logout</button>
-            </div>
-        </div>
-    </nav>
+<body class="app-body">
+    <div id="app-layout" data-page="practice"></div>
 
-    <div class="practice-container">
+    <main class="page-shell">
+        <div class="practice-container">
         <div class="practice-header">
             <h1>✍️ Writing Practice</h1>
             <p>Improve your writing skills with structured exercises</p>
         </div>
+
+        <section class="ai-workspace">
+            <div class="ai-tabs">
+                <button class="ai-tab active" data-ai-tab="writing">Writing Evaluation</button>
+                <button class="ai-tab" data-ai-tab="context">Context Simplification</button>
+            </div>
+
+            <div class="ai-panel active" id="writingAiPanel">
+                <div class="ai-panel-header">
+                    <h2>AI Writing Coach</h2>
+                    <p>Paste your sentence, paragraph, or essay to receive grammar feedback and improvements.</p>
+                </div>
+                <textarea id="aiWritingInput" rows="10" placeholder="Write your English text here..."></textarea>
+                <div class="ai-actions">
+                    <button id="analyzeWritingBtn" class="btn-primary">Analyze Writing</button>
+                </div>
+                <div id="writingResultCard" class="ai-result-card hidden">
+                    <div class="result-header">
+                        <h3>Performance Summary</h3>
+                        <span id="writingScoreBadge" class="score-badge">0/10</span>
+                    </div>
+                    <div class="result-grid">
+                        <div class="metric-box">
+                            <span class="metric-label">Grammar</span>
+                            <strong id="grammarMetric">0/10</strong>
+                        </div>
+                        <div class="metric-box">
+                            <span class="metric-label">Vocabulary</span>
+                            <strong id="vocabMetric">0/10</strong>
+                        </div>
+                    </div>
+                    <div class="result-block">
+                        <h4>Feedback</h4>
+                        <p id="writingFeedbackText"></p>
+                    </div>
+                    <div class="result-block">
+                        <h4>Suggested Improvements</h4>
+                        <ul id="writingGrammarList" class="result-list"></ul>
+                    </div>
+                    <div class="compare-boxes">
+                        <div class="compare-box">
+                            <h4>Original</h4>
+                            <p id="originalTextPreview"></p>
+                        </div>
+                        <div class="compare-box improved">
+                            <h4>Corrected Version</h4>
+                            <p id="correctedTextPreview"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="ai-panel" id="contextAiPanel">
+                <div class="ai-panel-header">
+                    <h2>Context Simplifier</h2>
+                    <p>Paste a complex paragraph or exam question to simplify the language and explain difficult words.</p>
+                </div>
+                <textarea id="contextInput" rows="10" placeholder="Paste a difficult English paragraph or question here..."></textarea>
+                <div class="ai-actions">
+                    <button id="simplifyContextBtn" class="btn-primary">Simplify Text</button>
+                </div>
+                <div id="contextResultCard" class="ai-result-card hidden">
+                    <div class="result-header">
+                        <h3>Easy English Breakdown</h3>
+                        <span id="contextScoreBadge" class="score-badge">0/10</span>
+                    </div>
+                    <div class="result-block">
+                        <h4>Simple Explanation</h4>
+                        <p id="contextFeedbackText"></p>
+                    </div>
+                    <div class="result-block">
+                        <h4>Simplified Text</h4>
+                        <p id="simplifiedTextPreview"></p>
+                    </div>
+                </div>
+            </div>
+        </section>
 
         <div class="level-selector">
             <label>Select Level:</label>
@@ -67,8 +132,10 @@
             </div>
         </div>
     </div>
+    </main>
 
     <script src="js/auth.js"></script>
+    <script src="js/layout.js"></script>
     <script src="js/writing.js"></script>
 </body>
 </html>

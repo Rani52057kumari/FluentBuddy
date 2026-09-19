@@ -7,6 +7,8 @@ document.addEventListener('DOMContentLoaded', function() {
     displayUserInfo();
     initializeLogout();
 
+    setupAiWorkspace();
+
     // Level selector
     const levelBtns = document.querySelectorAll('.level-btn');
     levelBtns.forEach(btn => {
@@ -44,6 +46,127 @@ document.addEventListener('DOMContentLoaded', function() {
     // Load initial exercises
     loadExercises();
 });
+
+function setupAiWorkspace() {
+    const tabs = document.querySelectorAll('.ai-tab');
+    const panels = document.querySelectorAll('.ai-panel');
+
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            const selected = tab.dataset.aiTab;
+            tabs.forEach(item => item.classList.toggle('active', item === tab));
+            panels.forEach(panel => {
+                panel.classList.toggle('active', panel.id === `${selected}AiPanel`);
+            });
+        });
+    });
+
+    const analyzeBtn = document.getElementById('analyzeWritingBtn');
+    if (analyzeBtn) {
+        analyzeBtn.addEventListener('click', analyzeWritingWithAi);
+    }
+
+    const simplifyBtn = document.getElementById('simplifyContextBtn');
+    if (simplifyBtn) {
+        simplifyBtn.addEventListener('click', simplifyContextWithAi);
+    }
+}
+
+async function analyzeWritingWithAi() {
+    const text = document.getElementById('aiWritingInput').value.trim();
+    const resultCard = document.getElementById('writingResultCard');
+    const button = document.getElementById('analyzeWritingBtn');
+
+    if (!text) {
+        alert('Please enter some text to evaluate.');
+        return;
+    }
+
+    button.disabled = true;
+    button.textContent = 'Analyzing...';
+    resultCard.classList.add('loading');
+
+    try {
+        const response = await fetch(`${API_URL}/ai/evaluate-writing`, {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({ text })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.message || 'Unable to analyze writing right now.');
+        }
+
+        const score = Number(data.score || 0);
+        const grammar = Math.max(1, Math.min(10, Math.round(score)));
+        const vocabulary = Math.max(1, Math.min(10, Math.round(score * 0.95)));
+
+        document.getElementById('writingScoreBadge').textContent = `${score}/10`;
+        document.getElementById('grammarMetric').textContent = `${grammar}/10`;
+        document.getElementById('vocabMetric').textContent = `${vocabulary}/10`;
+        document.getElementById('writingFeedbackText').textContent = data.feedback || 'No feedback available.';
+        document.getElementById('writingGrammarList').innerHTML = (data.grammarFixes || []).map(item => `<li>${item}</li>`).join('') || '<li>No grammar suggestions available.</li>';
+        document.getElementById('originalTextPreview').textContent = text;
+        document.getElementById('correctedTextPreview').textContent = data.simplifiedText || text;
+        resultCard.classList.remove('hidden');
+        resultCard.classList.remove('loading');
+    } catch (error) {
+        console.error('AI writing analysis failed:', error);
+        document.getElementById('writingFeedbackText').textContent = error.message || 'Network error. Please try again.';
+        document.getElementById('writingGrammarList').innerHTML = '<li>Unable to fetch feedback right now.</li>';
+        resultCard.classList.remove('hidden');
+    } finally {
+        button.disabled = false;
+        button.textContent = 'Analyze Writing';
+        resultCard.classList.remove('loading');
+    }
+}
+
+async function simplifyContextWithAi() {
+    const text = document.getElementById('contextInput').value.trim();
+    const resultCard = document.getElementById('contextResultCard');
+    const button = document.getElementById('simplifyContextBtn');
+
+    if (!text) {
+        alert('Please enter a paragraph or question to simplify.');
+        return;
+    }
+
+    button.disabled = true;
+    button.textContent = 'Simplifying...';
+    resultCard.classList.add('loading');
+
+    try {
+        const response = await fetch(`${API_URL}/ai/simplify-context`, {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({ text })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.message || 'Unable to simplify the text right now.');
+        }
+
+        const score = Number(data.score || 0);
+        document.getElementById('contextScoreBadge').textContent = `${score}/10`;
+        document.getElementById('contextFeedbackText').textContent = data.feedback || 'No explanation available.';
+        document.getElementById('simplifiedTextPreview').textContent = data.simplifiedText || text;
+        resultCard.classList.remove('hidden');
+    } catch (error) {
+        console.error('AI simplify context failed:', error);
+        document.getElementById('contextFeedbackText').textContent = error.message || 'Network error. Please try again.';
+        document.getElementById('simplifiedTextPreview').textContent = 'The simplifier could not process your text at the moment.';
+        resultCard.classList.remove('hidden');
+    } finally {
+        button.disabled = false;
+        button.textContent = 'Simplify Text';
+        resultCard.classList.remove('loading');
+    }
+}
 
 async function loadExercises() {
     try {

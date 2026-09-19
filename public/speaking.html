@@ -6,23 +6,11 @@
     <title>Speaking Practice - FluentBuddy</title>
     <link rel="stylesheet" href="css/styles.css">
 </head>
-<body>
-    <nav class="dashboard-nav">
-        <div class="nav-container">
-            <div class="logo">
-                <h2>FluentBuddy</h2>
-            </div>
-            <div class="nav-links">
-                <a href="/dashboard">Dashboard</a>
-                <a href="/progress">My Progress</a>
-                <a href="/profile">Profile</a>
-                <span id="userDisplay" class="user-display"></span>
-                <button id="logoutBtn" class="btn-secondary">Logout</button>
-            </div>
-        </div>
-    </nav>
+<body class="app-body">
+    <div id="app-layout" data-page="practice"></div>
 
-    <div class="practice-container">
+    <main class="page-shell">
+        <div class="practice-container">
         <div class="practice-header">
             <h1>🎤 Speaking Practice</h1>
             <p>Practice your pronunciation and speaking fluency</p>
@@ -75,8 +63,10 @@
             </div>
         </div>
     </div>
+    </main>
 
     <script src="js/auth.js"></script>
+    <script src="js/layout.js"></script>
     <script src="js/speaking.js"></script>
 </body>
 </html>

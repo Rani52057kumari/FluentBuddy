@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const user = getCurrentUser();
     document.getElementById('username').textContent = user.username;
-    document.getElementById('userLevel').textContent = capitalizeFirst(user.level);
+    document.getElementById('userLevel').textContent = capitalizeFirst(user.englishLevel || user.level || 'beginner');
 
     // Load progress overview
     loadProgressOverview();
@@ -17,87 +17,45 @@ document.addEventListener('DOMContentLoaded', function() {
 
 async function loadProgressOverview() {
     try {
-        const response = await fetch(`${API_URL}/progress/overview`, {
+        const response = await fetch(`${API_URL}/analytics/progress`, {
             headers: getAuthHeaders()
         });
 
-        if (response.ok) {
-            const data = await response.json();
-            
-            // Update stats
-            document.getElementById('totalExercises').textContent = data.totalExercises;
-            document.getElementById('averageScore').textContent = data.averageScore + '%';
+        const responseData = await response.json();
 
-            // Update exercise counts by type
-            const byType = {};
-            data.byType.forEach(item => {
-                byType[item.exercise_type] = item.count;
-            });
-
-            document.getElementById('speakingCount').textContent = 
-                (byType['speaking'] || 0) + ' completed';
-            document.getElementById('writingCount').textContent = 
-                (byType['writing'] || 0) + ' completed';
-            document.getElementById('readingCount').textContent = 
-                (byType['reading'] || 0) + ' completed';
-
-            // Display recent activity
-            displayRecentActivity(data.recentActivity);
+        if (!response.ok) {
+            throw new Error(responseData.message || responseData.error || 'Unable to load progress data.');
         }
+
+        const data = responseData.data || {};
+        const userLevel = data.currentLevel || getCurrentUser()?.englishLevel || getCurrentUser()?.level || 'beginner';
+        const byType = {};
+
+        if (Array.isArray(data.byType)) {
+            data.byType.forEach((item) => {
+                byType[String(item.exercise_type || '').toLowerCase()] = Number(item.count || 0);
+            });
+        }
+
+        document.getElementById('totalExercises').textContent = Number(data.totalExercises || 0);
+        document.getElementById('averageScore').textContent = `${Number(data.averageScore || 0)}%`;
+        document.getElementById('userLevel').textContent = capitalizeFirst(userLevel);
+
+        document.getElementById('speakingCount').textContent = `${byType.speaking || 0} completed`;
+        document.getElementById('writingCount').textContent = `${byType.writing || 0} completed`;
+        document.getElementById('readingCount').textContent = `${byType.reading || 0} completed`;
     } catch (error) {
         console.error('Error loading progress:', error);
+        document.getElementById('totalExercises').textContent = 0;
+        document.getElementById('averageScore').textContent = '0%';
+        document.getElementById('userLevel').textContent = capitalizeFirst(getCurrentUser()?.englishLevel || getCurrentUser()?.level || 'beginner');
+        document.getElementById('speakingCount').textContent = '0 completed';
+        document.getElementById('writingCount').textContent = '0 completed';
+        document.getElementById('readingCount').textContent = '0 completed';
     }
-}
-
-function displayRecentActivity(activities) {
-    const activityList = document.getElementById('recentActivityList');
-    
-    if (activities.length === 0) {
-        activityList.innerHTML = '<p class="no-activity">No recent activity. Start practicing to see your progress!</p>';
-        return;
-    }
-
-    activityList.innerHTML = activities.map(activity => `
-        <div class="activity-item">
-            <div class="activity-info">
-                <h4>${getActivityIcon(activity.exercise_type)} ${activity.title}</h4>
-                <p class="activity-meta">
-                    ${capitalizeFirst(activity.level)} • ${formatDate(activity.completed_at)}
-                </p>
-            </div>
-            <div class="activity-score">${activity.score}%</div>
-        </div>
-    `).join('');
-}
-
-function getActivityIcon(type) {
-    const icons = {
-        'speaking': '🎤',
-        'writing': '✍️',
-        'reading': '📖'
-    };
-    return icons[type] || '📝';
 }
 
 function capitalizeFirst(str) {
-    return str.charAt(0).toUpperCase() + str.slice(1);
-}
-
-function formatDate(dateString) {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffMs = now - date;
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
-
-    if (diffMins < 60) {
-        return diffMins === 0 ? 'Just now' : `${diffMins} min ago`;
-    } else if (diffHours < 24) {
-        return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
-    } else if (diffDays < 7) {
-        return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
-    } else {
-        return date.toLocaleDateString();
-    }
+    const value = String(str || 'beginner');
+    return value.charAt(0).toUpperCase() + value.slice(1);
 }

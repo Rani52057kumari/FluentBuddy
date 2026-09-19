@@ -11,7 +11,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const loginBtn = document.getElementById('loginBtn');
     const signupBtn = document.getElementById('signupBtn');
     const getStartedBtn = document.getElementById('getStartedBtn');
-    const sendLoginOtpBtn = document.getElementById('sendLoginOtpBtn');
     const sendSignupOtpBtn = document.getElementById('sendSignupOtpBtn');
     
     // Get close buttons
@@ -70,21 +69,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    sendLoginOtpBtn.addEventListener('click', async () => {
-        const identifier = document.getElementById('loginIdentifier').value;
-        if (!identifier.trim()) {
-            alert('Please enter your email or phone number first.');
-            return;
-        }
-
-        const result = await sendOtpRequest(identifier, 'login');
-        if (result.success) {
-            alert(result.message || 'OTP sent successfully.');
-        } else {
-            alert(result.error || 'Unable to send OTP.');
-        }
-    });
-
     sendSignupOtpBtn.addEventListener('click', async () => {
         const identifier = document.getElementById('signupIdentifier').value;
         if (!identifier.trim()) {
@@ -106,14 +90,8 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const identifier = document.getElementById('loginIdentifier').value;
         const password = document.getElementById('loginPassword').value;
-        const otp = document.getElementById('loginOtp').value;
 
-        if (!otp.trim()) {
-            alert('Please enter the OTP received via email or phone before logging in.');
-            return;
-        }
-
-        const result = await login(identifier, password, otp);
+        const result = await login(identifier, password);
         
         if (result.success) {
             window.location.href = '/dashboard';

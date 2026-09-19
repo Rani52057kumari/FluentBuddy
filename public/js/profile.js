@@ -1,191 +1,197 @@
 // Profile management
 let currentProfile = null;
 
-// Check authentication on page load
 if (!isLoggedIn()) {
     window.location.href = '/';
 }
 
-// Load profile data
 async function loadProfile() {
     try {
         const response = await fetch(`${API_URL}/auth/profile`, {
-            headers: getAuthHeaders()
+            headers: getAuthHeaders(),
         });
+        const result = await response.json();
 
-        if (response.ok) {
-            const profile = await response.json();
-            currentProfile = profile;
-            displayProfile(profile);
-            await loadStats();
-        } else {
-            showAlert('Failed to load profile', 'error');
+        if (!response.ok) {
+            throw new Error(result.message || result.error || 'Failed to load profile');
         }
+
+        const profile = result.user || result;
+        currentProfile = profile;
+        displayProfile(profile);
+        await loadStats();
     } catch (error) {
-        showAlert('Connection error', 'error');
+        console.error('Failed to load profile', error);
+        showAlert('Unable to load profile data.', 'error');
     }
 }
 
-// Display profile data
 function displayProfile(profile) {
-    document.getElementById('profileName').textContent = profile.username;
-    document.getElementById('profileEmail').textContent = profile.email;
-    document.getElementById('username').value = profile.username;
-    document.getElementById('email').value = profile.email;
-    document.getElementById('bio').value = profile.bio || '';
-    document.getElementById('currentLevel').textContent = capitalizeFirst(profile.level);
+    const userName = profile.name || profile.username || 'User';
+    const level = profile.englishLevel || profile.level || 'Beginner';
+    const photoUrl = profile.profilePhoto || profile.profile_photo || '';
+    const createdAt = profile.createdAt || profile.created_at;
 
-    // Display profile photo
-    if (profile.profile_photo) {
-        document.getElementById('profilePhoto').src = profile.profile_photo;
-        document.getElementById('profilePhoto').style.display = 'block';
-        document.getElementById('profilePhotoPlaceholder').style.display = 'none';
+    document.getElementById('profileName').textContent = userName;
+    document.getElementById('profileEmail').textContent = profile.email || 'No email provided';
+    document.getElementById('username').value = userName;
+    document.getElementById('email').value = profile.email || '';
+    document.getElementById('bio').value = profile.bio || '';
+    document.getElementById('currentLevel').textContent = capitalizeFirst(level);
+
+    if (photoUrl) {
+        const photo = document.getElementById('profilePhoto');
+        const placeholder = document.getElementById('profilePhotoPlaceholder');
+        photo.src = photoUrl;
+        photo.style.display = 'block';
+        placeholder.style.display = 'none';
     } else {
         document.getElementById('profilePhoto').style.display = 'none';
         document.getElementById('profilePhotoPlaceholder').style.display = 'flex';
     }
 
-    // Format member since date
-    const memberSince = new Date(profile.created_at);
-    document.getElementById('memberSince').textContent = `Member since ${memberSince.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}`;
-}
-
-// Load user statistics
-async function loadStats() {
-    try {
-        const response = await fetch(`${API_URL}/progress/user`, {
-            headers: getAuthHeaders()
-        });
-
-        if (response.ok) {
-            const progress = await response.json();
-            displayStats(progress);
-        }
-    } catch (error) {
-        console.error('Failed to load stats', error);
+    if (createdAt) {
+        const memberSince = new Date(createdAt);
+        document.getElementById('memberSince').textContent = `Member since ${memberSince.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}`;
+    } else {
+        document.getElementById('memberSince').textContent = 'Member';
     }
 }
 
-// Display statistics
-function displayStats(progress) {
-    const total = progress.length;
-    const completed = progress.filter(p => p.completed).length;
-    
-    // Calculate average score
-    let totalScore = 0;
-    let scoreCount = 0;
-    progress.forEach(p => {
-        if (p.score !== null && p.score !== undefined) {
-            totalScore += p.score;
-            scoreCount++;
-        }
-    });
-    const averageScore = scoreCount > 0 ? Math.round(totalScore / scoreCount) : 0;
+async function loadStats() {
+    try {
+        const response = await fetch(`${API_URL}/analytics/progress`, {
+            headers: getAuthHeaders(),
+        });
+        const result = await response.json();
 
-    document.getElementById('totalExercises').textContent = total;
-    document.getElementById('completedExercises').textContent = completed;
-    document.getElementById('averageScore').textContent = `${averageScore}%`;
+        if (!response.ok) {
+            throw new Error(result.message || result.error || 'Unable to load stats');
+        }
+
+        const payload = result.data || {};
+        const total = Number(payload.totalExercises || 0);
+        const averageScore = Number(payload.averageScore || 0);
+        const level = payload.currentLevel || currentProfile?.englishLevel || currentProfile?.level || 'Beginner';
+
+        document.getElementById('totalExercises').textContent = total;
+        document.getElementById('completedExercises').textContent = total;
+        document.getElementById('averageScore').textContent = `${averageScore}%`;
+        document.getElementById('currentLevel').textContent = capitalizeFirst(level);
+    } catch (error) {
+        console.error('Failed to load stats', error);
+        document.getElementById('totalExercises').textContent = 0;
+        document.getElementById('completedExercises').textContent = 0;
+        document.getElementById('averageScore').textContent = '0%';
+        document.getElementById('currentLevel').textContent = 'Beginner';
+    }
 }
 
-// Handle profile form submission
-document.getElementById('profileForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
-    const username = document.getElementById('username').value;
-    const bio = document.getElementById('bio').value;
-    const profile_photo = currentProfile.profile_photo;
+async function updateProfileRequest() {
+    const username = document.getElementById('username').value.trim();
+    const bio = document.getElementById('bio').value.trim();
+    const profilePhoto = currentProfile?.profilePhoto || currentProfile?.profile_photo || '';
 
     try {
         const response = await fetch(`${API_URL}/auth/profile`, {
             method: 'PUT',
             headers: getAuthHeaders(),
-            body: JSON.stringify({ username, bio, profile_photo })
+            body: JSON.stringify({ username, bio, profilePhoto }),
         });
-
         const data = await response.json();
 
-        if (response.ok) {
-            showAlert('Profile updated successfully!', 'success');
-            currentProfile = data.user;
-            displayProfile(data.user);
-            
-            // Update localStorage
-            const user = getCurrentUser();
-            user.username = data.user.username;
+        if (!response.ok) {
+            throw new Error(data.message || data.error || 'Failed to update profile');
+        }
+
+        currentProfile = data.user;
+        displayProfile(data.user);
+        showAlert('Profile updated successfully!', 'success');
+
+        const user = getCurrentUser();
+        if (user) {
+            user.username = data.user.username || data.user.name;
+            user.englishLevel = data.user.englishLevel || data.user.level || user.englishLevel;
+            user.level = data.user.level || user.level;
             localStorage.setItem('user', JSON.stringify(user));
-        } else {
-            showAlert(data.error || 'Failed to update profile', 'error');
         }
     } catch (error) {
-        showAlert('Connection error', 'error');
+        console.error('Profile update error:', error);
+        showAlert(error.message || 'Failed to update profile', 'error');
     }
+}
+
+document.getElementById('profileForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    await updateProfileRequest();
 });
 
-// Handle file upload
 document.getElementById('photoInput').addEventListener('change', (e) => {
     const file = e.target.files[0];
-    if (file) {
-        if (file.size > 5 * 1024 * 1024) { // 5MB limit
-            showAlert('Image size should be less than 5MB', 'error');
-            return;
-        }
+    if (!file) return;
 
-        const reader = new FileReader();
-        reader.onload = (event) => {
-            const imageData = event.target.result;
-            currentProfile.profile_photo = imageData;
-            document.getElementById('profilePhoto').src = imageData;
-            document.getElementById('profilePhoto').style.display = 'block';
-            document.getElementById('profilePhotoPlaceholder').style.display = 'none';
-        };
-        reader.readAsDataURL(file);
+    if (file.size > 5 * 1024 * 1024) {
+        showAlert('Image size should be less than 5MB', 'error');
+        return;
     }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+        const imageData = event.target.result;
+        const photo = document.getElementById('profilePhoto');
+        const placeholder = document.getElementById('profilePhotoPlaceholder');
+
+        currentProfile = currentProfile || {};
+        currentProfile.profilePhoto = imageData;
+        currentProfile.profile_photo = imageData;
+        photo.src = imageData;
+        photo.style.display = 'block';
+        placeholder.style.display = 'none';
+    };
+    reader.readAsDataURL(file);
 });
 
-// Handle avatar selection
-document.querySelectorAll('.photo-option').forEach(option => {
+document.querySelectorAll('.photo-option').forEach((option) => {
     option.addEventListener('click', (e) => {
         const avatarSeed = e.target.dataset.avatar;
         const avatarUrl = `https://api.dicebear.com/7.x/avataaars/svg?seed=${avatarSeed}`;
-        
-        // Remove selected class from all options
-        document.querySelectorAll('.photo-option').forEach(opt => {
+
+        document.querySelectorAll('.photo-option').forEach((opt) => {
             opt.classList.remove('selected');
         });
-        
-        // Add selected class to clicked option
+
         e.target.classList.add('selected');
-        
-        // Update profile photo
+
+        const photo = document.getElementById('profilePhoto');
+        const placeholder = document.getElementById('profilePhotoPlaceholder');
+        currentProfile = currentProfile || {};
+        currentProfile.profilePhoto = avatarUrl;
         currentProfile.profile_photo = avatarUrl;
-        document.getElementById('profilePhoto').src = avatarUrl;
-        document.getElementById('profilePhoto').style.display = 'block';
-        document.getElementById('profilePhotoPlaceholder').style.display = 'none';
+        photo.src = avatarUrl;
+        photo.style.display = 'block';
+        placeholder.style.display = 'none';
     });
 });
 
-// Show alert message
 function showAlert(message, type) {
     const alertDiv = document.getElementById('alertMessage');
     alertDiv.textContent = message;
     alertDiv.className = `alert alert-${type} show`;
-    
+
     setTimeout(() => {
         alertDiv.classList.remove('show');
     }, 5000);
 }
 
-// Logout function
+function capitalizeFirst(str) {
+    const value = String(str || 'Beginner');
+    return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
 function logout() {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     window.location.href = '/';
 }
 
-// Capitalize first letter
-function capitalizeFirst(str) {
-    return str.charAt(0).toUpperCase() + str.slice(1);
-}
-
-// Load profile on page load
 loadProfile();

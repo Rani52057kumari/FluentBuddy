@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Practice Hub - FluentBuddy</title>
+    <link rel="stylesheet" href="css/styles.css">
+  </head>
+  <body class="app-body">
+    <div id="app-layout" data-page="practice"></div>
+
+    <main class="page-shell">
+      <header class="page-header">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;">
+          <div>
+            <p class="eyebrow">Skill Practice Portal</p>
+             <h1 class="page-title">Build fluency across all four skills</h1>
+             <p class="page-subtitle">Practice core skills and track progress with AI feedback</p>
+          </div>
+          <div style="display:flex;align-items:center;gap:0.5rem;">
+            <button id="startAssessmentBtn" class="btn btn-primary">Take Assessment Test</button>
+          </div>
+        </div>
+
+          <div class="section-card" style="margin-top:1rem;padding:1rem;">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;">
+              <div>
+                <p style="margin:0;color:var(--text-muted);">Current level status</p>
+                <h3 id="progressLevelText" style="margin:6px 0 0;color:var(--text-dark);">Intermediate</h3>
+              </div>
+              <div style="text-align:right;color:var(--text-muted);">
+                <p style="margin:0">Goal path</p>
+                <p id="goalPathText" style="margin:6px 0 0;font-weight:700;color:var(--primary-color);">75% to Advanced</p>
+              </div>
+            </div>
+            <div style="margin-top:12px;background:var(--bg-muted);height:12px;border-radius:999px;overflow:hidden;">
+              <div id="levelProgressBar" style="height:100%;background:linear-gradient(90deg,var(--primary-color),var(--secondary-color));width:75%;"></div>
+            </div>
+          </div>
+      </header>
+
+      <section class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <section class="modules-grid">
+          <div class="module-card" data-tab="speaking">
+            <div class="module-icon">🎤</div>
+            <h3>Speaking Practice</h3>
+            <p>Practice clarity, fluency, and pronunciation with guided prompts.</p>
+          </div>
+
+          <div class="module-card" data-tab="writing">
+            <div class="module-icon">✍️</div>
+            <h3>Writing Practice</h3>
+            <p>Write, correct, and improve grammar with AI feedback in real time.</p>
+          </div>
+
+          <div class="module-card" data-tab="reading">
+            <div class="module-icon">📖</div>
+            <h3>Reading Comprehension</h3>
+            <p>Read, answer, and evaluate context-based questions with deeper understanding.</p>
+          </div>
+
+          <div class="module-card" data-tab="assessment">
+            <div class="module-icon">🧪</div>
+            <h3>Take Assessment Test</h3>
+            <p>Complete a timed evaluation covering speaking, writing, and reading.</p>
+          </div>
+        </section>
+
+      <section id="workspaceSection" class="section-card" style="margin-top:2rem;padding:20px;">
+        <div id="speakingPanel" class="panel hidden">
+          <div class="mb-5" style="display:flex;justify-content:space-between;align-items:center;gap:12px;">
+            <div>
+              <p class="eyebrow">Speaking</p>
+              <h3 style="margin:6px 0 0;color:var(--text-dark);">Pronunciation & Fluency Lab</h3>
+            </div>
+            <div style="border-radius:999px;padding:6px 10px;background:rgba(239,68,68,0.08);color:#b91c1c;font-weight:700;">AI feedback enabled</div>
+          </div>
+
+          <div class="grid" style="gap:1.25rem;display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));">
+            <div>
+              <div class="section-card p-4">
+                <p style="margin:0;color:var(--text-muted);font-weight:700;">Prompt</p>
+                <p id="speakingPrompt" style="margin-top:8px;color:var(--text-dark);">Describe your ideal weekend and explain what makes it relaxing.</p>
+              </div>
+
+              <div class="section-card p-4" style="margin-top:12px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                  <p style="margin:0;color:var(--text-muted);font-weight:700;">Live waveform</p>
+                </div>
+                <div class="wave-container">
+                  <span class="wave-bar"></span>
+                  <span class="wave-bar" style="height:40%;"></span>
+                  <span class="wave-bar" style="height:65%;"></span>
+                  <span class="wave-bar" style="height:30%;"></span>
+                  <span class="wave-bar" style="height:55%;"></span>
+                  <span class="wave-bar" style="height:45%;"></span>
+                  <span class="wave-bar" style="height:70%;"></span>
+                  <span class="wave-bar" style="height:60%;"></span>
+                </div>
+              </div>
+
+              <div style="display:flex;gap:12px;margin-top:12px;align-items:center;flex-wrap:wrap;">
+                <button id="startRecordingBtn" class="mic-btn" aria-pressed="false" title="Start recording">🎤</button>
+                <button id="stopRecordingBtn" class="btn btn-secondary" disabled>Stop & Submit</button>
+                <div id="recordingBadge" class="recording-indicator hidden" style="margin-left:8px;">● Recording</div>
+              </div>
+
+              <div class="section-card p-4" style="margin-top:12px;">
+                <label for="speakingTranscript" style="display:block;margin-bottom:8px;font-weight:700;color:var(--text-dark);">Speech transcript</label>
+                <div class="manual-input">
+                  <textarea id="speakingTranscript" rows="5" placeholder="Your spoken answer will appear here or you can type it manually." style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--border-color);background:white;color:var(--text-dark);"></textarea>
+                </div>
+              </div>
+            </div>
+
+            <div class="section-card p-5">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+                <h4 style="margin:0;font-size:1.1rem;color:var(--text-dark);">AI Feedback</h4>
+                <button id="submitSpeakingBtn" class="btn btn-primary">Analyze Speech</button>
+              </div>
+              <div id="speakingFeedback" style="margin-top:12px;color:var(--text-muted);font-size:0.95rem;">
+                <p style="margin:0;color:var(--text-muted);">Record your answer or enter a transcript, then click “Analyze Speech” to get pronunciation, fluency, and grammar feedback.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="writingPanel" class="panel hidden">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px;">
+            <div>
+              <p class="eyebrow">Writing</p>
+              <h3 style="margin:6px 0 0;color:var(--text-dark);">Creative Writing Studio</h3>
+            </div>
+            <div style="border-radius:999px;padding:6px 10px;background:rgba(245,158,11,0.08);color:#92400e;font-weight:700;">Grammar AI active</div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1.3fr 0.7fr;gap:1.25rem;">
+            <div class="section-card p-4">
+              <div style="display:flex;justify-content:space-between;align-items:center;color:var(--text-light);font-size:0.95rem;margin-bottom:8px;">
+                <span>Essay prompt</span>
+                <span id="wordCount">0 words</span>
+              </div>
+              <div class="writing-area">
+                <textarea id="writingInput" rows="12" placeholder="Write about a memorable experience, a challenge you solved, or a place that shaped you..."></textarea>
+              </div>
+            </div>
+
+            <div class="section-card p-5">
+              <button id="grammarHelperBtn" class="btn btn-primary" style="width:100%;">AI Grammar Helper</button>
+              <div class="section-card p-4" style="margin-top:12px;">
+                <p style="margin:0;font-weight:700;color:var(--text-dark);">Suggestions</p>
+                <div id="writingFeedback" style="margin-top:12px;color:var(--text-muted);font-size:0.95rem;">
+                  <p style="margin:0;color:var(--text-muted);">Your grammar and style feedback will appear here after analysis.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="readingPanel" class="panel hidden">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px;">
+            <div>
+              <p class="eyebrow">Reading</p>
+              <h3 style="margin:6px 0 0;color:var(--text-dark);">Comprehension Challenge</h3>
+            </div>
+            <button id="generateReadingBtn" class="btn btn-secondary">Generate Passage</button>
+          </div>
+
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:1.25rem;">
+            <div class="section-card p-5">
+              <h4 style="margin:0 0 8px;color:var(--text-dark);">Reading Passage</h4>
+              <div id="readingPassage" class="reading-passage">
+                No passage loaded yet. Generate a new reading activity to begin.
+              </div>
+            </div>
+
+            <div class="section-card p-5">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                <h4 style="margin:0;color:var(--text-dark);">Your Answers</h4>
+                <button id="analyzeReadingBtn" class="btn btn-primary">Analyze Answers</button>
+              </div>
+              <div id="readingQuestions" style="display:block;gap:12px;"> </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="assessmentPanel" class="panel hidden">
+          <div class="section-card p-4" style="display:flex;flex-direction:row;align-items:center;justify-content:space-between;gap:12px;">
+            <div>
+              <p class="eyebrow">Assessment</p>
+              <h3 style="margin:6px 0 0;color:var(--text-dark);">Timed Skill Evaluation</h3>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;">
+              <div style="border-radius:10px;padding:8px 10px;background:rgba(6,182,212,0.06);border:1px solid rgba(6,182,212,0.12);">
+                <span style="color:var(--text-light);">Time Left:</span>
+                <span id="assessmentTimer" style="margin-left:8px;font-weight:800;color:var(--text-dark);">10:00</span>
+              </div>
+              <button id="startAssessmentAction" class="btn btn-primary">Start Test</button>
+            </div>
+          </div>
+
+          <div id="assessmentContent" class="section-card p-5">
+            <p style="margin:0;color:var(--text-muted);">Start your assessment to receive a timed mix of reading, writing, and speaking tasks.</p>
+          </div>
+
+          <div style="margin-top:16px;display:flex;justify-content:space-between;gap:12px;">
+            <button id="prevAssessmentStep" class="btn btn-secondary">Previous</button>
+            <button id="nextAssessmentStep" class="btn btn-primary">Next Task</button>
+            <button id="submitAssessmentBtn" class="btn btn-primary" style="display:none;">Submit Assessment</button>
+          </div>
+        </div>
+
+        <div id="resultPanel" class="hidden mt-8 section-card p-6">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px;">
+            <div>
+              <p class="eyebrow">Assessment Summary</p>
+              <h3 style="margin:6px 0 0;color:var(--text-dark);">Your results</h3>
+            </div>
+            <div id="resultLevelBadge" style="border-radius:999px;padding:6px 10px;background:rgba(16,185,129,0.08);color:#065f46;font-weight:800;">Advanced</div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-top:16px;">
+            <div class="section-card p-4">
+              <canvas id="skillChart" height="250"></canvas>
+            </div>
+            <div id="resultSummary" class="section-card p-5" style="min-height:100px;"></div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/layout.js"></script>
+    <script src="js/practice.js"></script>
+  </body>
+</html>

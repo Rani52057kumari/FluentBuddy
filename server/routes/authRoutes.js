@@ -6,6 +6,8 @@ const {
   verifyOtp,
   googleAuth,
   getMe,
+  getProfile,
+  updateProfile,
 } = require('../controllers/authController');
 const { protect } = require('../middleware/authMiddleware');
 
@@ -20,5 +22,7 @@ router.post('/google', googleAuth);
 
 // Protected route
 router.get('/me', protect, getMe);
+router.get('/profile', protect, getProfile);
+router.put('/profile', protect, updateProfile);
 
 module.exports = router;
