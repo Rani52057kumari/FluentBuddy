@@ -1,289 +1,130 @@
 # FluentBuddy - AI-Powered English Learning Platform
 
-FluentBuddy is a comprehensive, interactive English learning platform designed to help students improve their speaking, writing, and reading comprehension skills. The platform provides personalized exercises, instant feedback, and progress tracking to support students in overcoming language barriers and building confidence in English communication.
+FluentBuddy is an interactive English-learning web app that combines structured practice (speaking, writing, reading) with AI-powered assistance and developer-friendly APIs. It includes a floating AI assistant (Buddy) available across all pages, file upload + PDF/code explain features, invite/notes flows, and contribution analytics.
 
-## 🎯 Problem Statement
+## Why FluentBuddy
 
-Many students face significant challenges in understanding and communicating in English, especially in academic environments. This platform addresses:
+Learners often lack affordable, personalized practice with actionable feedback. FluentBuddy helps by combining leveled exercises with fast AI guidance, real-time speaking practice, and persistent progress tracking.
 
-- Difficulty comprehending English questions and instructions
-- Lack of confidence in speaking and writing English
-- Limited access to personalized, real-world practice
-- Need for instant feedback and progress tracking
+## Features
 
-## ✨ Features
+- Floating AI assistant (Buddy) — available across all pages; supports text chat, TTS, and optional STT.
+- Explain Code: upload source files or paste code, then get line-by-line explanations from the AI.
+- PDF Explain: upload PDFs and receive extracted/summarized explanations.
+- Practice modules: speaking, writing, reading with instant feedback.
+- Notes & Member Invites: collaborative notes and invite/accept flows for team sharing.
+- Project analytics: contribution and file-upload statistics, progress dashboards.
+- Public shareable read-only project pages.
+- Authenticated user profiles with progress persistence.
 
-### 🎤 Speaking Practice
-- Interactive speaking exercises with voice recognition
-- Real-time pronunciation feedback
-- Level-appropriate prompts (Beginner, Intermediate, Advanced)
-- Manual text input option for compatibility
+## Tech stack
 
-### ✍️ Writing Practice
-- Structured writing exercises
-- Grammar and style feedback
-- Word count and character tracking
-- Progressive difficulty levels
+Frontend: HTML, CSS, Vanilla JavaScript (shared layout injection), Web Speech API for TTS/STT.
 
-### 📖 Reading Comprehension
-- Level-appropriate reading passages
-- Comprehension questions
-- Contextual understanding exercises
-- Instant answer evaluation
+Backend: Node.js + Express. Data persisted in MongoDB via Mongoose. Key integrations:
 
-### 📊 Progress Tracking
-- Comprehensive performance analytics
-- Exercise completion history
-- Score tracking by activity type
-- Recent activity timeline
+- Google Gemini / Generative AI (via @google/genai) for Explain Code, chatbot, and STT fallbacks
+- Multer for file uploads, pdf-parse for PDF text extraction
+- JWT for authentication and route protection
 
-### 🔐 User Management
-- Secure authentication system
-- Personalized user profiles
-- Level-based content delivery
-- Progress persistence
-
-## 🛠️ Technology Stack
-
-### Frontend
-- **HTML5** - Semantic markup and structure
-- **CSS3** - Modern, responsive design
-- **JavaScript** - Interactive functionality
-- **Web Speech API** - Voice recognition for speaking practice
-
-### Backend
-- **Node.js** - Server runtime
-- **Express.js** - Web application framework
-- **SQLite3** - Lightweight database
-- **JWT** - Authentication tokens
-- **bcryptjs** - Password hashing
-
-## 📁 Project Structure
+## Project layout (important files)
 
 ```
-Project 2/
-├── server/
-│   ├── database/
-│   │   └── db.js              # Database initialization and schema
-│   ├── routes/
-│   │   ├── auth.js            # Authentication routes
-│   │   ├── exercises.js       # Exercise management routes
-│   │   └── progress.js        # Progress tracking routes
-│   └── server.js              # Main server file
-├── public/
-│   ├── css/
-│   │   └── styles.css         # All styling
-│   ├── js/
-│   │   ├── auth.js            # Authentication logic
-│   │   ├── main.js            # Landing page functionality
-│   │   ├── dashboard.js       # Dashboard logic
-│   │   ├── speaking.js        # Speaking practice
-│   │   ├── writing.js         # Writing practice
-│   │   ├── reading.js         # Reading practice
-│   │   └── progress.js        # Progress tracking
-│   ├── index.html             # Landing page
-│   ├── dashboard.html         # User dashboard
-│   ├── speaking.html          # Speaking practice page
-│   ├── writing.html           # Writing practice page
-│   ├── reading.html           # Reading comprehension page
-│   └── progress.html          # Progress tracking page
-├── package.json               # Dependencies and scripts
-└── README.md                  # This file
+FluentBuddy/
+├─ server/
+│  ├─ server.js
+   │  ├─ controllers/
+   │  │  ├─ aiController.js
+   │  │  └─ chatbotController.js
+   │  ├─ routes/
+   │  │  ├─ chatbotRoutes.js
+   │  │  └─ authRoutes.js
+   │  └─ database/db.js
+├─ public/
+│  ├─ js/
+│  │  ├─ layout.js
+   │  │  └─ ChatWidget.js
+│  ├─ css/chat-widget.css
+│  └─ *.html (dashboard, practice, profile, etc.)
+├─ package.json
+└─ README.md
 ```
 
-## 🚀 Installation & Setup
+## Quick start (development)
 
-### Prerequisites
-- Node.js (v14 or higher)
-- npm (Node Package Manager)
+Prereqs: Node.js (16+), npm, MongoDB running locally or remotely.
 
-### Step 1: Install Dependencies
+1) Install dependencies
 
 ```bash
-cd "/home/admin-022/Project 2"
 npm install
 ```
 
-### Step 2: Start the Server
+2) Environment
+
+Create a `.env` in the project root with at least:
+
+```
+PORT=3000
+MONGODB_URI=mongodb://localhost:27017/fluentbuddy
+JWT_SECRET=your_jwt_secret
+GOOGLE_API_KEY=...  # optional for Gemini integrations
+```
+
+3) Run
 
 ```bash
-npm start
+npm run dev   # starts server with nodemon (if configured)
+npm start     # production start
 ```
 
-For development with auto-reload:
+4) Open: http://localhost:3000
 
-```bash
-npm run dev
-```
+## Usage highlights
 
-### Step 3: Access the Application
+- Floating AI assistant: click the FAB (bottom-right) to open Buddy; click again to close — it now reliably reopens on each click.
+- Chat: type messages or use the mic button for speech input. Buddy replies formally and will avoid markdown/asterisk formatting.
+- Explain Code / PDF Explain: use the file upload area in the project page to upload source files or PDFs; the backend extracts content and asks the AI for line-by-line or summarized explanations.
+- Notes & Invites: create notes, invite members, and accept/reject invites from the dashboard (see UI flows).
+- Public share: generate a read-only public link for projects.
 
-Open your web browser and navigate to:
-```
-http://localhost:3000
-```
+If you are developing locally, use the browser devtools console to see API requests and widget logs.
 
-## 📖 Usage Guide
+## Key API endpoints (examples)
 
-### Getting Started
+- `POST /api/chatbot/query` — send a chat message to Buddy (supports guest queries when allowed)
+- `POST /api/chatbot/stt` — submit audio for transcription (protected)
+- `POST /api/projects/:id/upload` — upload files for a project (PDF, code files)
+- `GET /api/projects/:id/share` — public read-only project page
+- `POST /api/auth/login` — login and receive JWT
 
-1. **Sign Up**
-   - Click "Sign Up" on the landing page
-   - Enter your username, email, and password
-   - Select your current English level (Beginner, Intermediate, Advanced)
-   - Click "Sign Up" to create your account
+See `server/routes/` for full route list and implementation details.
 
-2. **Login**
-   - Click "Login" on the landing page
-   - Enter your email and password
-   - Click "Login" to access your dashboard
+## Contributing
 
-### Dashboard
+Contributions are welcome. Common tasks:
 
-The dashboard provides:
-- Overview of your statistics (total exercises, average score, current level)
-- Quick access to all practice modules
-- Recent activity summary
+- Improve AI prompts and normalization in `server/controllers/chatbotController.js`.
+- Add more file parsers (OCR for scanned PDFs).
+- Persist chat history and sessions in the DB.
 
-### Practice Modules
+Please open issues or pull requests. Follow existing code style and run the app locally to test changes.
 
-#### Speaking Practice
-1. Select your difficulty level
-2. Choose an exercise
-3. Click "Start Recording" to use voice input (or type your response)
-4. Submit your response for instant feedback
+## Environment & security notes
 
-**Note:** Speech recognition requires a modern browser with Web Speech API support (Chrome recommended)
+- Keep secrets in environment variables (`.env` or platform config). Do not commit keys.
+- Ensure `JWT_SECRET` is set and strong for production.
+- When deploying, enable HTTPS and configure allowed origins for API access.
+## Troubleshooting
 
-#### Writing Practice
-1. Select your difficulty level
-2. Choose an exercise
-3. Write your response in the text area
-4. Monitor word and character count
-5. Submit for evaluation and feedback
+- If port 3000 is in use, set `PORT` env var: `PORT=3001 npm start`.
+- For speech/STT issues, ensure browser permissions and use Chrome for best support.
 
-#### Reading Comprehension
-1. Select your difficulty level
-2. Choose a reading exercise
-3. Read the passage carefully
-4. Answer the comprehension question
-5. Submit for instant feedback
+## License
 
-### Progress Tracking
-
-View your progress:
-- Overall statistics and average score
-- Performance breakdown by exercise type
-- Complete activity timeline with scores and feedback
-- Filter activities by type (Speaking, Writing, Reading)
-
-## 🔧 API Endpoints
-
-### Authentication
-- `POST /api/auth/register` - Register new user
-- `POST /api/auth/login` - User login
-- `GET /api/auth/profile` - Get user profile (protected)
-
-### Exercises
-- `GET /api/exercises/:type` - Get exercises by type
-- `GET /api/exercises/:type/:id` - Get specific exercise
-- `POST /api/exercises/:type/:id/submit` - Submit exercise answer
-
-### Progress
-- `GET /api/progress/overview` - Get user progress overview
-- `GET /api/progress/:type` - Get progress by exercise type
-
-## 🎨 Features Highlights
-
-### Responsive Design
-- Works seamlessly on desktop, tablet, and mobile devices
-- Modern, intuitive user interface
-- Smooth animations and transitions
-
-### Real-time Feedback
-- Instant scoring on exercise completion
-- Detailed feedback messages
-- Personalized improvement suggestions
-
-### Progress Analytics
-- Track improvement over time
-- Identify strengths and areas for improvement
-- Visualize performance metrics
-
-### Security
-- Password hashing with bcrypt
-- JWT-based authentication
-- Protected API routes
-
-## 🔐 Security Notes
-
-**Important:** Before deploying to production:
-
-1. Change the JWT secret in `server/routes/auth.js`:
-   ```javascript
-   const JWT_SECRET = 'your-secure-secret-key-here';
-   ```
-
-2. Use environment variables for sensitive data:
-   ```javascript
-   const JWT_SECRET = process.env.JWT_SECRET;
-   const PORT = process.env.PORT || 3000;
-   ```
-
-3. Enable HTTPS in production
-
-## 🤝 Contributing
-
-This is an educational project. Suggestions for improvements:
-
-1. Integration with advanced AI APIs (OpenAI, Google Cloud Speech-to-Text)
-2. More sophisticated scoring algorithms
-3. Gamification features (badges, leaderboards)
-4. Social features (study groups, peer review)
-5. Mobile applications (iOS, Android)
-6. Multilingual support
-7. Advanced analytics and reporting
-
-## 📝 Sample Exercises
-
-The platform comes pre-loaded with sample exercises:
-- 3 Speaking exercises (Beginner to Advanced)
-- 3 Writing exercises (Beginner to Advanced)
-- 3 Reading comprehension exercises (Beginner to Advanced)
-
-## 🐛 Troubleshooting
-
-### Port Already in Use
-If port 3000 is occupied:
-```bash
-# Change the port in server/server.js or set environment variable
-PORT=3001 npm start
-```
-
-### Speech Recognition Not Working
-- Ensure you're using a supported browser (Chrome recommended)
-- Check microphone permissions
-- Use the manual text input as an alternative
-
-### Database Issues
-- Delete the `fluentbuddy.db` file and restart the server to recreate the database
-- Check write permissions in the `server/database/` directory
-
-## 📄 License
-
-MIT License - Feel free to use this project for educational purposes.
-
-## 👨‍💻 Author
-
-Created as an educational project to help students overcome English language barriers in academic settings.
-
-## 🙏 Acknowledgments
-
-- Built with modern web technologies
-- Designed with students' needs in mind
-- Focused on practical, real-world English skills
+MIT — educational use encouraged.
 
 ---
 
-**Start your English learning journey with FluentBuddy today! 🚀**
+Updated README — see [README.md](README.md) for details.
 # FluentBuddy
