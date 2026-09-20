@@ -352,7 +352,7 @@ const analyzeReading = async () => {
   try {
     const response = await fetch(`${API_URL}/practice/reading/submit`, {
       method: 'POST',
-      headers: getAuthHeaders(),
+      headers: Object.assign({'Content-Type':'application/json'}, getAuthHeaders()),
       body: JSON.stringify({
         passage: practiceState.reading.passage,
         answers,
@@ -402,7 +402,7 @@ const submitSpeakingPractice = async () => {
   try {
     const response = await fetch(`${API_URL}/practice/speaking`, {
       method: 'POST',
-      headers: getAuthHeaders(),
+      headers: Object.assign({'Content-Type':'application/json'}, getAuthHeaders()),
       body: JSON.stringify({
         promptText,
         transcript,
@@ -456,7 +456,7 @@ const evaluateWriting = async () => {
   try {
     const response = await fetch(`${API_URL}/ai/evaluate-writing`, {
       method: 'POST',
-      headers: getAuthHeaders(),
+      headers: Object.assign({'Content-Type':'application/json'}, getAuthHeaders()),
       body: JSON.stringify({ text }),
     });
     const result = await response.json();
@@ -532,7 +532,7 @@ const submitAssessment = async () => {
   try {
     const response = await fetch(`${API_URL}/practice/test/submit`, {
       method: 'POST',
-      headers: getAuthHeaders(),
+      headers: Object.assign({'Content-Type':'application/json'}, getAuthHeaders()),
       body: JSON.stringify({
         testType: practiceState.assessment.data.testType || 'Diagnostic',
         responses: practiceState.assessment.responses,

@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', function() {
             try {
                 const res = await fetch(`${API_URL}/notes`, {
                     method: 'POST',
-                    headers: getAuthHeaders(),
+                    headers: Object.assign({'Content-Type':'application/json'}, getAuthHeaders()),
                     body: JSON.stringify({ title, content })
                 });
 
@@ -95,10 +95,10 @@ async function loadUserNotes() {
 
                     try {
                         const res = await fetch(`${API_URL}/notes/${noteId}/members`, {
-                            method: 'POST',
-                            headers: getAuthHeaders(),
-                            body: JSON.stringify(payload)
-                        });
+                                method: 'POST',
+                                headers: Object.assign({'Content-Type':'application/json'}, getAuthHeaders()),
+                                body: JSON.stringify(payload)
+                            });
 
                         const data = await res.json();
                         if (!res.ok) throw new Error(data.message || 'Unable to add member');

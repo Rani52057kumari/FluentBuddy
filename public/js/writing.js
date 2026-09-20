@@ -89,7 +89,7 @@ async function analyzeWritingWithAi() {
     try {
         const response = await fetch(`${API_URL}/ai/evaluate-writing`, {
             method: 'POST',
-            headers: getAuthHeaders(),
+            headers: Object.assign({'Content-Type':'application/json'}, getAuthHeaders()),
             body: JSON.stringify({ text })
         });
 
@@ -141,7 +141,7 @@ async function simplifyContextWithAi() {
     try {
         const response = await fetch(`${API_URL}/ai/simplify-context`, {
             method: 'POST',
-            headers: getAuthHeaders(),
+            headers: Object.assign({'Content-Type':'application/json'}, getAuthHeaders()),
             body: JSON.stringify({ text })
         });
 
@@ -245,7 +245,7 @@ async function submitWriting() {
             `${API_URL}/exercises/writing/${currentExercise.id}/submit`,
             {
                 method: 'POST',
-                headers: getAuthHeaders(),
+                headers: Object.assign({'Content-Type':'application/json'}, getAuthHeaders()),
                 body: JSON.stringify({ answer: writingText })
             }
         );

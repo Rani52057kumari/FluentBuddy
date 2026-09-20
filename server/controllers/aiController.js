@@ -87,6 +87,65 @@ const sendToGemini = async (prompt, fallbackBuilder) => {
   return fallbackBuilder();
 };
 
+// Send a prompt and attempt to parse the model output as JSON, returning the
+// parsed object. If Gemini is not configured or parsing fails, return the
+// result of `fallbackBuilder()`.
+const sendToGeminiRaw = async (prompt, fallbackBuilder) => {
+  const candidates = getGeminiCandidates();
+
+  if (!process.env.GEMINI_API_KEY) {
+    return fallbackBuilder();
+  }
+
+  let lastError = null;
+
+  for (const modelName of candidates) {
+    try {
+      const model = getGeminiModel(modelName);
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      let rawText = String(response.text() || '').trim();
+
+      if (!rawText) return fallbackBuilder();
+
+      // Remove markdown fences if present
+      if (rawText.startsWith('```')) {
+        rawText = rawText.replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/, '').trim();
+      }
+
+      try {
+        const parsed = JSON.parse(rawText);
+        return parsed;
+      } catch (parseErr) {
+        // If parsing fails, try to recover by locating the first JSON block
+        const jsonStart = rawText.indexOf('{');
+        const jsonEnd = rawText.lastIndexOf('}');
+        if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
+          const candidate = rawText.substring(jsonStart, jsonEnd + 1);
+          try {
+            const parsed2 = JSON.parse(candidate);
+            return parsed2;
+          } catch (e2) {
+            // fall through to fallback
+          }
+        }
+        // unable to parse; return fallback
+        return fallbackBuilder();
+      }
+    } catch (error) {
+      lastError = error;
+      const isMissingModel = error?.status === 404 || /not found|no longer available/i.test(String(error?.message || ''));
+
+      if (!isMissingModel) {
+        break;
+      }
+    }
+  }
+
+  console.error('Gemini raw API error:', lastError || 'Unknown Gemini error');
+  return fallbackBuilder();
+};
+
 const fallbackWritingResponse = (text, englishLevel) => ({
   feedback: `Your writing is understandable, but it will improve with clearer sentence structure and stronger word choice. Focus on using accurate grammar and simpler phrasing at your ${englishLevel.toLowerCase()} level.`,
   score: 7,
@@ -254,7 +313,74 @@ const comprehensionAssist = async (req, res) => {
   }
 };
 
+const FileMeta = require('../models/FileMeta');
+
+const explainCode = async (req, res) => {
+  try {
+    let { code, filename } = req.body;
+
+    // If no code provided but filename is present, try to use extractedText from FileMeta
+    if ((!code || !String(code).trim()) && filename) {
+      const meta = await FileMeta.findOne({ filename }).lean();
+      if (meta) {
+        // If PDF and extractedText is empty, return a helpful error so frontend can guide the user
+        if (meta.mimeType === 'application/pdf' && !(meta.extractedText && String(meta.extractedText).trim())) {
+          return res.status(422).json({ success: false, message: 'No text was extracted from this PDF. It may be a scanned image — upload a searchable PDF or paste the text to explain.' });
+        }
+
+        if (meta.extractedText) {
+          code = meta.extractedText;
+        }
+      }
+    }
+
+    if (!code || !String(code).trim()) {
+      return res.status(400).json({ success: false, message: 'No code provided.' });
+    }
+
+    const lang = (filename || '').split('.').pop() || 'text';
+    const prompt = `You are an expert software engineer. Provide a line-by-line explanation of the following ${lang} code. Return JSON with a single field "lines" which is an array of objects [{"line": 1, "code": "...", "explanation": "..."}]. Only return valid JSON.`;
+
+    const aiParsed = await sendToGeminiRaw(`${prompt}\n\n${code}`, () => null);
+
+    // If Gemini returned a parsed object with `lines`, use it.
+    if (aiParsed && Array.isArray(aiParsed.lines)) {
+      // Ensure each line item includes line, code, explanation
+      const normalized = aiParsed.lines.map((item, idx) => ({
+        line: item.line || idx + 1,
+        code: item.code || (String(code).split('\n')[idx] || ''),
+        explanation: item.explanation || String(item.explanation || item.note || '') || 'No explanation provided.'
+      }));
+      return res.status(200).json({ success: true, lines: normalized });
+    }
+
+    // Try a more flexible parse: if Gemini returned an object mapping line->explanation
+    if (aiParsed && typeof aiParsed === 'object') {
+      const linesArray = [];
+      if (aiParsed.lines && Array.isArray(aiParsed.lines)) {
+        // handled above
+      } else if (aiParsed.byLine && typeof aiParsed.byLine === 'object') {
+        // allow byLine: {"1":"...","2":"..."}
+        const src = String(code).split('\n');
+        for (const [k, v] of Object.entries(aiParsed.byLine)) {
+          const n = Number(k) || null;
+          if (n) linesArray.push({ line: n, code: src[n - 1] || '', explanation: String(v) });
+        }
+        if (linesArray.length) return res.status(200).json({ success: true, lines: linesArray });
+      }
+    }
+
+    // Fallback: return a simple split-by-line explanation placeholder
+    const fallbackLines = String(code).split('\n').map((l, idx) => ({ line: idx + 1, code: l, explanation: 'Explanation not available.' }));
+    return res.status(200).json({ success: true, lines: fallbackLines });
+  } catch (error) {
+    console.error('Explain code error:', error);
+    return res.status(500).json({ success: false, message: 'Unable to explain code right now.' });
+  }
+};
+
 module.exports = {
   evaluateWriting,
   comprehensionAssist,
+  explainCode,
 };

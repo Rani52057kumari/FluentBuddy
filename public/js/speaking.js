@@ -162,7 +162,7 @@ async function submitSpeaking() {
             `${API_URL}/exercises/speaking/${currentExercise.id}/submit`,
             {
                 method: 'POST',
-                headers: getAuthHeaders(),
+                headers: Object.assign({'Content-Type':'application/json'}, getAuthHeaders()),
                 body: JSON.stringify({ answer: spokenText })
             }
         );

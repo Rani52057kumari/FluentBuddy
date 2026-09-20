@@ -130,7 +130,7 @@ async function submitReading() {
             `${API_URL}/exercises/reading/${currentExercise.id}/submit`,
             {
                 method: 'POST',
-                headers: getAuthHeaders(),
+                headers: Object.assign({'Content-Type':'application/json'}, getAuthHeaders()),
                 body: JSON.stringify({ answer: answer })
             }
         );

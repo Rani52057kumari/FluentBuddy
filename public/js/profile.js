@@ -95,7 +95,7 @@ async function updateProfileRequest() {
     try {
         const response = await fetch(`${API_URL}/auth/profile`, {
             method: 'PUT',
-            headers: getAuthHeaders(),
+            headers: Object.assign({'Content-Type':'application/json'}, getAuthHeaders()),
             body: JSON.stringify({ username, bio, profilePhoto }),
         });
         const data = await response.json();

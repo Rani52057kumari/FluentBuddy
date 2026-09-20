@@ -720,6 +720,15 @@ a {
 .invite-text { color:var(--text-dark); }
 .invite-actions { display:flex; gap:8px; }
 
+/* Files panel */
+.files-section { margin-top: 1.25rem; }
+.files-panel { padding: 12px; background: linear-gradient(180deg,#fff,#fbfdff); border-radius:12px; border:1px solid rgba(148,163,184,0.08); }
+.upload-form { display:flex; gap:8px; align-items:center; margin-bottom:12px; }
+.files-list { list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:8px; }
+.file-item { padding:10px; background:#fff; border:1px solid rgba(148,163,184,0.06); border-radius:10px; display:flex; align-items:center; justify-content:space-between; }
+.file-meta { color:var(--text-dark); }
+.file-actions { display:flex; gap:8px; }
+
 .member-item {
     font-size: 0.92rem;
     color: var(--text-dark);

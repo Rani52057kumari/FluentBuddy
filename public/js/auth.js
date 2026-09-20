@@ -26,8 +26,10 @@ function getCurrentUser() {
 // Set authentication headers
 function getAuthHeaders() {
     const token = localStorage.getItem('token');
+    // Return only Authorization header here. Callers that send JSON bodies
+    // should explicitly add `Content-Type: application/json` so multipart
+    // requests (FormData) can omit it and let the browser set boundaries.
     return {
-        'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
     };
 }
