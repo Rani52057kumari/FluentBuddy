@@ -1,4 +1,8 @@
+const mongoose = require('mongoose');
 const PracticeLog = require('../models/PracticeLog');
+const Note = require('../models/Note');
+const FileMeta = require('../models/FileMeta');
+const User = require('../models/User');
 
 const normalizeModuleKey = (moduleType = '') => String(moduleType || '').trim().toLowerCase();
 
@@ -153,6 +157,111 @@ const getUserProgress = async (req, res) => {
   }
 };
 
+const getContributionAnalytics = async (req, res) => {
+  try {
+    const userId = req.user?._id;
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: 'User is not authenticated.',
+      });
+    }
+
+    const [accessibleNotes, fileUploaders] = await Promise.all([
+      Note.find({
+        $or: [{ owner: userId }, { members: userId }],
+      })
+        .select('owner members')
+        .lean(),
+      FileMeta.distinct('uploader', { uploader: { $ne: null } }),
+    ]);
+
+    const teamMemberSet = new Set([String(userId)]);
+    accessibleNotes.forEach((note) => {
+      if (note.owner) teamMemberSet.add(String(note.owner));
+      (note.members || []).forEach((memberId) => teamMemberSet.add(String(memberId)));
+    });
+    fileUploaders.forEach((memberId) => teamMemberSet.add(String(memberId)));
+
+    const teamMemberIds = [...teamMemberSet];
+    const teamMemberObjectIds = teamMemberIds.map((id) => new mongoose.Types.ObjectId(id));
+
+    const [teamUsers, noteCounts, fileCounts] = await Promise.all([
+      User.find({ _id: { $in: teamMemberObjectIds } })
+        .select('name email')
+        .lean(),
+      Note.aggregate([
+        {
+          $match: {
+            $or: [{ owner: { $in: teamMemberObjectIds } }, { members: { $in: teamMemberObjectIds } }],
+          },
+        },
+        {
+          $group: {
+            _id: '$owner',
+            notesCreated: { $sum: 1 },
+          },
+        },
+      ]),
+      FileMeta.aggregate([
+        {
+          $match: { uploader: { $in: teamMemberObjectIds } },
+        },
+        {
+          $group: {
+            _id: '$uploader',
+            filesUploaded: { $sum: 1 },
+          },
+        },
+      ]),
+    ]);
+
+    const userMap = new Map(teamUsers.map((user) => [String(user._id), user]));
+    const noteCountMap = new Map(noteCounts.map((row) => [String(row._id), Number(row.notesCreated || 0)]));
+    const fileCountMap = new Map(fileCounts.map((row) => [String(row._id), Number(row.filesUploaded || 0)]));
+
+    const contributionByMember = teamMemberIds
+      .map((memberId) => {
+        const user = userMap.get(String(memberId));
+        const notesCreated = noteCountMap.get(String(memberId)) || 0;
+        const filesUploaded = fileCountMap.get(String(memberId)) || 0;
+
+        return {
+          memberId,
+          name: user?.name || 'Unknown User',
+          email: user?.email || '',
+          notesCreated,
+          filesUploaded,
+          totalActivities: notesCreated + filesUploaded,
+        };
+      })
+      .sort((a, b) => b.totalActivities - a.totalActivities || b.notesCreated - a.notesCreated);
+
+    const totalNotes = contributionByMember.reduce((sum, member) => sum + member.notesCreated, 0);
+    const totalFiles = contributionByMember.reduce((sum, member) => sum + member.filesUploaded, 0);
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        teamMembers: contributionByMember.length,
+        totalNotes,
+        totalFiles,
+        totalActivities: totalNotes + totalFiles,
+        topContributor: contributionByMember[0] || null,
+        activityLogs: contributionByMember,
+      },
+    });
+  } catch (error) {
+    console.error('Get contribution analytics error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Unable to fetch contribution analytics at this time.',
+    });
+  }
+};
+
 module.exports = {
   getUserProgress,
+  getContributionAnalytics,
 };

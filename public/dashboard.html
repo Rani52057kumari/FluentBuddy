@@ -102,6 +102,78 @@
             </div>
         </section>
 
+        <section class="project-section" id="projectSection">
+            <h2>Projects & Public Sharing</h2>
+            <div class="notes-grid">
+                <div class="notes-panel">
+                    <form id="createProjectForm" class="note-form">
+                        <input id="projectNameInput" placeholder="Project name" required />
+                        <textarea id="projectDescriptionInput" placeholder="Project description"></textarea>
+                        <label style="display:flex; align-items:center; gap:10px; margin:10px 0; color:#374151;">
+                            <input id="projectIsPublicInput" type="checkbox" />
+                            Make this project public
+                        </label>
+                        <button type="submit" class="btn-module">Create Project</button>
+                    </form>
+                </div>
+                <div class="notes-panel">
+                    <ul id="projectsList" class="notes-list">
+                        <li class="empty-state">Loading projects...</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section class="contribution-section" id="contributionSection">
+            <h2>Contribution Analytics</h2>
+            <div class="stats-overview contribution-summary">
+                <div class="stat-card">
+                    <div class="stat-icon">👥</div>
+                    <div class="stat-content">
+                        <h3 id="teamMemberCount">0</h3>
+                        <p>Team Members</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">📝</div>
+                    <div class="stat-content">
+                        <h3 id="totalNotesCreated">0</h3>
+                        <p>Notes Created</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">📁</div>
+                    <div class="stat-content">
+                        <h3 id="totalFilesUploaded">0</h3>
+                        <p>Files Uploaded</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel contribution-panel">
+                <div class="panel-header">
+                    <h2>Team Activity</h2>
+                </div>
+                <div class="activity-table-wrapper">
+                    <table class="activity-table">
+                        <thead>
+                            <tr>
+                                <th>Member</th>
+                                <th>Notes</th>
+                                <th>Files</th>
+                                <th>Total</th>
+                            </tr>
+                        </thead>
+                        <tbody id="contributionTableBody">
+                            <tr>
+                                <td colspan="4" class="empty-state">Loading team activity...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
         <section class="files-section" id="filesSection">
             <h2>Files & Code</h2>
             <div class="files-panel">
@@ -115,8 +187,10 @@
     </div>
     </main>
 
+    <link rel="stylesheet" href="css/chat-widget.css">
     <script src="js/auth.js"></script>
     <script src="js/layout.js"></script>
+    <script src="js/ChatWidget.js"></script>
     <script src="js/dashboard.js"></script>
     <script src="js/notes.js"></script>
     <script src="js/invites.js"></script>

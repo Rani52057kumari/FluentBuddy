@@ -16,6 +16,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "@google/genai": "^1.52.0",
     "@google/generative-ai": "^0.24.1",
     "bcryptjs": "^2.4.3",
     "body-parser": "^1.20.2",

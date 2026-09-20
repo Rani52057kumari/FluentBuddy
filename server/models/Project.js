@@ -30,6 +30,12 @@ const projectSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    publicSlug: {
+      type: String,
+      unique: true,
+      sparse: true,
+      trim: true,
+    },
     createdAt: {
       type: Date,
       default: Date.now,

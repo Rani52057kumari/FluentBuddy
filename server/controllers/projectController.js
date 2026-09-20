@@ -1,6 +1,20 @@
+const crypto = require('crypto');
 const Project = require('../models/Project');
 const User = require('../models/User');
+const Note = require('../models/Note');
+const FileMeta = require('../models/FileMeta');
 const { normalizeEmail } = require('../utils/authHelpers');
+
+const generateProjectSlug = async () => {
+  const base = `${Date.now().toString(36)}-${crypto.randomBytes(4).toString('hex')}`;
+  const existing = await Project.findOne({ publicSlug: base });
+
+  if (existing) {
+    return generateProjectSlug();
+  }
+
+  return base;
+};
 
 const sanitizeUserSummary = (user) => {
   if (!user) return null;
@@ -31,12 +45,15 @@ const createProject = async (req, res) => {
       });
     }
 
+    const publicSlug = Boolean(isPublic) ? await generateProjectSlug() : null;
+
     const project = await Project.create({
       name: String(name).trim(),
       description: description ? String(description).trim() : '',
       owner: req.user._id,
       members: [req.user._id],
       isPublic: Boolean(isPublic),
+      publicSlug,
     });
 
     const createdProject = await populateProjectFields(project);
@@ -191,9 +208,119 @@ const getProjectById = async (req, res) => {
   }
 };
 
+const generateProjectShareLink = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const project = await Project.findById(id);
+
+    if (!project) {
+      return res.status(404).json({
+        success: false,
+        message: 'Project not found.',
+      });
+    }
+
+    if (String(project.owner) !== String(req.user._id)) {
+      return res.status(403).json({
+        success: false,
+        message: 'Only the project owner can generate a public share link.',
+      });
+    }
+
+    if (!project.publicSlug) {
+      project.publicSlug = await generateProjectSlug();
+      project.isPublic = true;
+      await project.save();
+    }
+
+    const shareUrl = `${process.env.APP_BASE_URL || 'http://localhost:3000'}/project/${project.publicSlug}`;
+
+    return res.status(200).json({
+      success: true,
+      shareUrl,
+      slug: project.publicSlug,
+      project,
+    });
+  } catch (error) {
+    console.error('Generate project share link error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Unable to generate project share link at this time.',
+    });
+  }
+};
+
+const getPublicProjectBySlug = async (req, res) => {
+  try {
+    const { slug } = req.params;
+
+    if (!slug) {
+      return res.status(400).json({
+        success: false,
+        message: 'Public project slug is required.',
+      });
+    }
+
+    const project = await Project.findOne({ publicSlug: slug })
+      .populate('owner', 'name email')
+      .populate('members', 'name email');
+
+    if (!project) {
+      return res.status(404).json({
+        success: false,
+        message: 'Public project not found.',
+      });
+    }
+
+    const [notes, files] = await Promise.all([
+      Note.find({
+        $or: [{ isPublic: true }, { owner: { $in: project.members } }, { members: { $in: project.members } }],
+      })
+        .populate('owner', 'name email')
+        .populate('members', 'name email')
+        .sort({ createdAt: -1 })
+        .lean(),
+      FileMeta.find({
+        uploader: { $in: project.members },
+      })
+        .populate('uploader', 'name email')
+        .sort({ createdAt: -1 })
+        .lean(),
+    ]);
+
+    return res.status(200).json({
+      success: true,
+      project: {
+        _id: project._id,
+        name: project.name,
+        description: project.description,
+        owner: project.owner,
+        members: project.members,
+        isPublic: project.isPublic,
+        publicSlug: project.publicSlug,
+        createdAt: project.createdAt,
+      },
+      notes: notes.filter((note) => note.isPublic || String(note.owner?._id || note.owner) === String(project.owner) || (note.members || []).some((member) => String(member?._id || member) === String(project.owner))),
+      files,
+      summary: {
+        totalNotes: notes.length,
+        totalFiles: files.length,
+      },
+    });
+  } catch (error) {
+    console.error('Get public project by slug error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Unable to fetch public project details at this time.',
+    });
+  }
+};
+
 module.exports = {
   createProject,
   addMember,
   getUserProjects,
   getProjectById,
+  generateProjectShareLink,
+  getPublicProjectBySlug,
 };

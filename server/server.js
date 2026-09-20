@@ -1,9 +1,9 @@
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
-const path = require('path');
 const mongoose = require('mongoose');
 const authRoutes = require('./routes/authRoutes');
 const projectRoutes = require('./routes/projectRoutes');
@@ -15,6 +15,7 @@ const analyticsRoutes = require('./routes/analyticsRoutes');
 const practiceRoutes = require('./routes/practiceRoutes');
 const exerciseRoutes = require('./routes/exercises');
 const progressRoutes = require('./routes/progress');
+const chatbotRoutes = require('./routes/chatbotRoutes');
 const { initializeDatabase } = require('./database/db');
 
 const app = express();
@@ -78,6 +79,7 @@ app.use('/api/analytics', analyticsRoutes);
 app.use('/api/practice', practiceRoutes);
 app.use('/api/exercises', exerciseRoutes);
 app.use('/api/progress', progressRoutes);
+app.use('/api/chatbot', chatbotRoutes);
 
 // Serve HTML pages
 app.get('/', (req, res) => {
@@ -110,6 +112,10 @@ app.get('/progress', (req, res) => {
 
 app.get('/profile', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/profile.html'));
+});
+
+app.get('/project/:slug', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/project-public.html'));
 });
 
 // Export for Vercel serverless

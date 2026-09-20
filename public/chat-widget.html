@@ -1,0 +1,41 @@
+<div class="fb-chat-widget" id="fluentBuddyChatWidget" aria-live="polite">
+  <button class="fb-chat-fab" id="fbChatFab" type="button" aria-label="Open FluentBuddy assistant">
+    <span class="fb-chat-fab-icon">🤖</span>
+    <span class="fb-chat-fab-label">Help</span>
+  </button>
+
+  <div class="fb-chat-panel" id="fbChatPanel" role="dialog" aria-modal="false" aria-label="FluentBuddy AI assistant">
+    <div class="fb-chat-header">
+      <div class="fb-chat-title-wrap">
+        <div class="fb-chat-avatar">B</div>
+        <div>
+          <div class="fb-chat-title">Buddy</div>
+          <div class="fb-chat-status">Online</div>
+        </div>
+      </div>
+      <div class="fb-chat-header-actions">
+        <button class="fb-chat-icon-btn" type="button" data-action="minimize" aria-label="Minimize chat">
+          <span>−</span>
+        </button>
+        <button class="fb-chat-icon-btn" type="button" data-action="clear" aria-label="Clear conversation">
+          <span>🗑</span>
+        </button>
+        <button class="fb-chat-icon-btn" type="button" data-action="close" aria-label="Close chat">
+          <span>✕</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="fb-chat-messages" id="fbChatMessages">
+      <div class="fb-chat-message fb-chat-message-bot">
+        <div class="fb-chat-bubble">Hi! I’m Buddy. Ask me about grammar, speaking practice, writing help, or how to use FluentBuddy.</div>
+      </div>
+    </div>
+
+    <div class="fb-chat-input-row">
+      <button class="fb-chat-mic" id="fbChatMic" type="button" aria-label="Use voice input">🎙️</button>
+      <input id="fbChatInput" type="text" placeholder="Ask Buddy anything..." aria-label="Chat message" />
+      <button class="fb-chat-send" id="fbChatSend" type="button" aria-label="Send message">Send</button>
+    </div>
+  </div>
+</div>
