@@ -2,6 +2,7 @@ const path = require('path');
 const fs = require('fs');
 const multer = require('multer');
 const FileMeta = require('../models/FileMeta');
+const Project = require('../models/Project');
 let pdf = require('pdf-parse');
 // Support both CJS and ESM-style default export shapes
 if (pdf && pdf.default && typeof pdf.default === 'function') pdf = pdf.default;
@@ -31,17 +32,30 @@ const uploadFileHandler = async (req, res) => {
       return res.status(400).json({ success: false, message: 'No file uploaded.' });
     }
 
-    // Prepare metadata
+    const projectId = req.body?.projectId || req.query?.projectId || null;
+    if (projectId) {
+      const project = await Project.findById(projectId);
+      if (!project) {
+        return res.status(404).json({ success: false, message: 'Project not found.' });
+      }
+
+      const isOwner = String(project.owner) === String(req.user?._id);
+      const isMember = project.members.some((memberId) => String(memberId) === String(req.user?._id));
+      if (!isOwner && !isMember) {
+        return res.status(403).json({ success: false, message: 'You do not have access to this project.' });
+      }
+    }
+
     const metaData = {
       filename: req.file.filename,
       originalName: req.file.originalname,
       mimeType: req.file.mimetype,
       size: req.file.size,
       uploader: req.user?._id,
+      project: projectId || null,
       createdAt: Date.now(),
     };
 
-    // If PDF, attempt to extract text and store it with the metadata
     try {
       if (req.file.mimetype === 'application/pdf') {
         const buffer = fs.readFileSync(path.join(uploadDir, req.file.filename));
@@ -64,7 +78,25 @@ const uploadFileHandler = async (req, res) => {
 
 const listUserFiles = async (req, res) => {
   try {
-    const files = await FileMeta.find({ uploader: req.user?._id }).sort({ createdAt: -1 });
+    const projectId = req.query?.projectId || req.body?.projectId || null;
+    const filter = { uploader: req.user?._id };
+
+    if (projectId) {
+      const project = await Project.findById(projectId);
+      if (!project) {
+        return res.status(404).json({ success: false, message: 'Project not found.' });
+      }
+
+      const isOwner = String(project.owner) === String(req.user?._id);
+      const isMember = project.members.some((memberId) => String(memberId) === String(req.user?._id));
+      if (!isOwner && !isMember) {
+        return res.status(403).json({ success: false, message: 'You do not have access to this project.' });
+      }
+
+      filter.project = projectId;
+    }
+
+    const files = await FileMeta.find(filter).sort({ createdAt: -1 });
     return res.status(200).json({ success: true, count: files.length, files });
   } catch (error) {
     console.error('List files error:', error);

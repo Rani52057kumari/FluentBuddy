@@ -17,6 +17,11 @@ const noteSchema = new mongoose.Schema(
       ref: 'User',
       required: [true, 'Note owner is required'],
     },
+    project: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Project',
+      default: null,
+    },
     members: {
       type: [
         {
@@ -41,6 +46,7 @@ const noteSchema = new mongoose.Schema(
 );
 
 noteSchema.index({ owner: 1 });
+noteSchema.index({ project: 1 });
 noteSchema.index({ members: 1 });
 
 module.exports = mongoose.model('Note', noteSchema);

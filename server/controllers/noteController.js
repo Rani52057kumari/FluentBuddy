@@ -1,5 +1,6 @@
 const Note = require('../models/Note');
 const User = require('../models/User');
+const Project = require('../models/Project');
 const Invite = require('../models/Invite');
 const { normalizeEmail } = require('../utils/authHelpers');
 
@@ -8,21 +9,50 @@ const populateNoteFields = async (note) => {
 
   return await Note.findById(note._id)
     .populate('owner', 'name email')
-    .populate('members', 'name email');
+    .populate('members', 'name email')
+    .populate('project', 'name owner members publicSlug');
+};
+
+const ensureProjectAccess = async (projectId, userId, res) => {
+  if (!projectId) {
+    return res.status(400).json({ success: false, message: 'Project ID is required to create notes.' });
+  }
+
+  const project = await Project.findById(projectId);
+  if (!project) {
+    return res.status(404).json({ success: false, message: 'Project not found.' });
+  }
+
+  const isOwner = String(project.owner) === String(userId);
+  const isMember = project.members.some((memberId) => String(memberId) === String(userId));
+
+  if (!isOwner && !isMember) {
+    return res.status(403).json({ success: false, message: 'You do not have access to this project.' });
+  }
+
+  return project;
 };
 
 const createNote = async (req, res) => {
   try {
-    const { title, content, isPublic } = req.body;
+    const { title, content, isPublic, projectId } = req.body;
 
     if (!title || !String(title).trim()) {
       return res.status(400).json({ success: false, message: 'Note title is required.' });
     }
 
+    const accessCheck = await ensureProjectAccess(projectId || req.query?.projectId, req.user._id, res);
+    if (accessCheck && accessCheck.statusCode) {
+      return accessCheck;
+    }
+
+    const project = accessCheck;
+
     const note = await Note.create({
       title: String(title).trim(),
       content: content ? String(content) : '',
       owner: req.user._id,
+      project: project._id,
       members: [req.user._id],
       isPublic: Boolean(isPublic),
     });
@@ -128,10 +158,29 @@ const removeMember = async (req, res) => {
 
 const getUserNotes = async (req, res) => {
   try {
-    const notes = await Note.find({ $or: [{ owner: req.user._id }, { members: req.user._id }] })
+    const projectId = req.query?.projectId || req.body?.projectId;
+    const filter = { $or: [{ owner: req.user._id }, { members: req.user._id }] };
+
+    if (projectId) {
+      const project = await Project.findById(projectId);
+      if (!project) {
+        return res.status(404).json({ success: false, message: 'Project not found.' });
+      }
+
+      const isOwner = String(project.owner) === String(req.user._id);
+      const isMember = project.members.some((memberId) => String(memberId) === String(req.user._id));
+      if (!isOwner && !isMember) {
+        return res.status(403).json({ success: false, message: 'You do not have access to this project.' });
+      }
+
+      filter.project = projectId;
+    }
+
+    const notes = await Note.find(filter)
       .sort({ createdAt: -1 })
       .populate('owner', 'name email')
-      .populate('members', 'name email');
+      .populate('members', 'name email')
+      .populate('project', 'name owner members publicSlug');
 
     return res.status(200).json({ success: true, count: notes.length, notes });
   } catch (error) {

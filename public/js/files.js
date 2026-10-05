@@ -2,9 +2,27 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!document.getElementById('filesSection')) return;
 
     requireAuth();
+    populateProjectSelect('fileProjectSelect');
     initFileForm();
     loadFiles();
 });
+
+async function populateProjectSelect(selectId) {
+    const select = document.getElementById(selectId);
+    if (!select) return;
+
+    try {
+        const res = await fetch(`${API_URL}/projects`, { headers: getAuthHeaders() });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || 'Unable to load projects');
+
+        const projects = Array.isArray(data.projects) ? data.projects : [];
+        select.innerHTML = '<option value="">Select a project</option>' + projects.map((project) => `<option value="${project._id}">${escapeHtml(project.name || 'Untitled Project')}</option>`).join('');
+    } catch (error) {
+        console.error('Load file project select error:', error);
+        select.innerHTML = '<option value="">Unable to load projects</option>';
+    }
+}
 
 function initFileForm() {
     const form = document.getElementById('uploadFileForm');
@@ -12,10 +30,13 @@ function initFileForm() {
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
         const fileInput = document.getElementById('fileInput');
+        const projectSelect = document.getElementById('fileProjectSelect');
         if (!fileInput.files.length) return alert('Select a file');
+        if (!projectSelect.value) return alert('Select a project before uploading.');
 
         const fd = new FormData();
         fd.append('file', fileInput.files[0]);
+        fd.append('projectId', projectSelect.value);
 
         try {
             const res = await fetch(`${API_URL}/files/upload`, {
@@ -36,7 +57,9 @@ function initFileForm() {
 
 async function loadFiles() {
     try {
-        const res = await fetch(`${API_URL}/files`, { headers: getAuthHeaders() });
+        const projectId = document.getElementById('fileProjectSelect')?.value || '';
+        const url = projectId ? `${API_URL}/files?projectId=${encodeURIComponent(projectId)}` : `${API_URL}/files`;
+        const res = await fetch(url, { headers: getAuthHeaders() });
         const data = await res.json();
         if (!res.ok) throw new Error(data.message || 'Unable to load files');
         const list = document.getElementById('filesList');

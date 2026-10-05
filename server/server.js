@@ -16,6 +16,7 @@ const practiceRoutes = require('./routes/practiceRoutes');
 const exerciseRoutes = require('./routes/exercises');
 const progressRoutes = require('./routes/progress');
 const chatbotRoutes = require('./routes/chatbotRoutes');
+const geminiRoutes = require('./routes/geminiRoutes');
 const { initializeDatabase } = require('./database/db');
 
 const app = express();
@@ -80,6 +81,7 @@ app.use('/api/practice', practiceRoutes);
 app.use('/api/exercises', exerciseRoutes);
 app.use('/api/progress', progressRoutes);
 app.use('/api/chatbot', chatbotRoutes);
+app.use('/api/gemini', geminiRoutes);
 
 // Serve HTML pages
 app.get('/', (req, res) => {

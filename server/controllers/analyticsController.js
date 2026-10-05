@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const PracticeLog = require('../models/PracticeLog');
 const Note = require('../models/Note');
 const FileMeta = require('../models/FileMeta');
+const Project = require('../models/Project');
 const User = require('../models/User');
 
 const normalizeModuleKey = (moduleType = '') => String(moduleType || '').trim().toLowerCase();
@@ -45,9 +46,7 @@ const getUserProgress = async (req, res) => {
 
     const [stats, recentLogs, allLogs] = await Promise.all([
       PracticeLog.aggregate([
-        {
-          $match: { userId: userId },
-        },
+        { $match: { userId: userId } },
         {
           $group: {
             _id: null,
@@ -67,26 +66,14 @@ const getUserProgress = async (req, res) => {
           $project: {
             _id: 0,
             totalSessions: 1,
-            avgGrammarScore: {
-              $ifNull: [{ $round: ['$avgGrammarScore', 2] }, 0],
-            },
-            avgVocabularyScore: {
-              $ifNull: [{ $round: ['$avgVocabularyScore', 2] }, 0],
-            },
-            recentFeedback: {
-              $slice: ['$recentFeedback', 5],
-            },
+            avgGrammarScore: { $ifNull: [{ $round: ['$avgGrammarScore', 2] }, 0] },
+            avgVocabularyScore: { $ifNull: [{ $round: ['$avgVocabularyScore', 2] }, 0] },
+            recentFeedback: { $slice: ['$recentFeedback', 5] },
           },
         },
       ]),
-      PracticeLog.find({ userId })
-        .sort({ createdAt: -1 })
-        .limit(5)
-        .select('sessionType userInput aiFeedback grammarScore vocabularyScore createdAt')
-        .lean(),
-      PracticeLog.find({ userId })
-        .select('moduleType scores grammarScore vocabularyScore')
-        .lean(),
+      PracticeLog.find({ userId }).sort({ createdAt: -1 }).limit(5).select('sessionType userInput aiFeedback grammarScore vocabularyScore createdAt').lean(),
+      PracticeLog.find({ userId }).select('moduleType scores grammarScore vocabularyScore').lean(),
     ]);
 
     const summary = stats[0] || {
@@ -105,12 +92,7 @@ const getUserProgress = async (req, res) => {
       createdAt: entry.createdAt,
     }));
 
-    const moduleStatsMap = {
-      speaking: 0,
-      writing: 0,
-      reading: 0,
-    };
-
+    const moduleStatsMap = { speaking: 0, writing: 0, reading: 0 };
     const byTypeMap = {};
     let totalScore = 0;
 
@@ -129,10 +111,7 @@ const getUserProgress = async (req, res) => {
 
     const totalExercises = allLogs.length;
     const averageScore = totalExercises > 0 ? Math.round(totalScore / totalExercises) : 0;
-    const byType = Object.entries(byTypeMap).map(([exercise_type, count]) => ({
-      exercise_type,
-      count,
-    }));
+    const byType = Object.entries(byTypeMap).map(([exercise_type, count]) => ({ exercise_type, count }));
 
     return res.status(200).json({
       success: true,
@@ -150,10 +129,7 @@ const getUserProgress = async (req, res) => {
     });
   } catch (error) {
     console.error('Get user progress error:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Unable to fetch analytics at this time.',
-    });
+    return res.status(500).json({ success: false, message: 'Unable to fetch analytics at this time.' });
   }
 };
 
@@ -162,58 +138,61 @@ const getContributionAnalytics = async (req, res) => {
     const userId = req.user?._id;
 
     if (!userId) {
-      return res.status(401).json({
-        success: false,
-        message: 'User is not authenticated.',
-      });
+      return res.status(401).json({ success: false, message: 'User is not authenticated.' });
     }
 
-    const [accessibleNotes, fileUploaders] = await Promise.all([
-      Note.find({
-        $or: [{ owner: userId }, { members: userId }],
-      })
-        .select('owner members')
-        .lean(),
-      FileMeta.distinct('uploader', { uploader: { $ne: null } }),
-    ]);
+    const projects = await Project.find({
+      $or: [{ owner: userId }, { members: userId }],
+    }).select('_id owner members').lean();
 
+    const projectIds = projects.map((project) => project._id).filter(Boolean);
     const teamMemberSet = new Set([String(userId)]);
-    accessibleNotes.forEach((note) => {
-      if (note.owner) teamMemberSet.add(String(note.owner));
-      (note.members || []).forEach((memberId) => teamMemberSet.add(String(memberId)));
+
+    projects.forEach((project) => {
+      if (project.owner) teamMemberSet.add(String(project.owner));
+      (project.members || []).forEach((memberId) => teamMemberSet.add(String(memberId)));
     });
-    fileUploaders.forEach((memberId) => teamMemberSet.add(String(memberId)));
 
     const teamMemberIds = [...teamMemberSet];
     const teamMemberObjectIds = teamMemberIds.map((id) => new mongoose.Types.ObjectId(id));
 
+    if (!projectIds.length) {
+      return res.status(200).json({
+        success: true,
+        data: {
+          teamMembers: 1,
+          totalNotes: 0,
+          totalFiles: 0,
+          totalActivities: 0,
+          topContributor: {
+            memberId: String(userId),
+            name: req.user?.name || 'You',
+            email: req.user?.email || '',
+            notesCreated: 0,
+            filesUploaded: 0,
+            totalActivities: 0,
+          },
+          activityLogs: [{
+            memberId: String(userId),
+            name: req.user?.name || 'You',
+            email: req.user?.email || '',
+            notesCreated: 0,
+            filesUploaded: 0,
+            totalActivities: 0,
+          }],
+        },
+      });
+    }
+
     const [teamUsers, noteCounts, fileCounts] = await Promise.all([
-      User.find({ _id: { $in: teamMemberObjectIds } })
-        .select('name email')
-        .lean(),
+      User.find({ _id: { $in: teamMemberObjectIds } }).select('name email').lean(),
       Note.aggregate([
-        {
-          $match: {
-            $or: [{ owner: { $in: teamMemberObjectIds } }, { members: { $in: teamMemberObjectIds } }],
-          },
-        },
-        {
-          $group: {
-            _id: '$owner',
-            notesCreated: { $sum: 1 },
-          },
-        },
+        { $match: { project: { $in: projectIds } } },
+        { $group: { _id: '$owner', notesCreated: { $sum: 1 } } },
       ]),
       FileMeta.aggregate([
-        {
-          $match: { uploader: { $in: teamMemberObjectIds } },
-        },
-        {
-          $group: {
-            _id: '$uploader',
-            filesUploaded: { $sum: 1 },
-          },
-        },
+        { $match: { project: { $in: projectIds } } },
+        { $group: { _id: '$uploader', filesUploaded: { $sum: 1 } } },
       ]),
     ]);
 
@@ -254,10 +233,7 @@ const getContributionAnalytics = async (req, res) => {
     });
   } catch (error) {
     console.error('Get contribution analytics error:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Unable to fetch contribution analytics at this time.',
-    });
+    return res.status(500).json({ success: false, message: 'Unable to fetch contribution analytics at this time.' });
   }
 };
 

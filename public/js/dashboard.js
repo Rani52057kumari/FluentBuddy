@@ -54,8 +54,8 @@ async function createProjectHandler(event) {
             throw new Error(payload.message || 'Unable to create project.');
         }
 
-        if (projectNameInput) projectNameInput.value = '';
-        if (projectDescriptionInput) projectDescriptionInput.value = '';
+        if (nameInput) nameInput.value = '';
+        if (descriptionInput) descriptionInput.value = '';
         if (isPublicInput) isPublicInput.checked = false;
 
         await loadProjects();

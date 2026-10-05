@@ -90,7 +90,15 @@
                 <div class="notes-panel">
                     <form id="createNoteForm" class="note-form">
                         <input id="noteTitle" placeholder="Note title" required />
-                        <textarea id="noteContent" placeholder="Write your note..."></textarea>
+                        <select id="noteProjectSelect" style="margin-bottom:12px; width:100%; padding:10px; border-radius:8px; border:1px solid #d1d5db;">
+                            <option value="">Select a project</option>
+                        </select>
+                        <textarea id="noteContent" placeholder="Write your note in Markdown..."></textarea>
+                        <div class="markdown-tools" style="display:flex; gap:8px; flex-wrap:wrap; margin:12px 0;">
+                            <button type="button" id="explainNoteBtn" class="btn-secondary">Explain this note</button>
+                            <button type="button" id="improveNoteBtn" class="btn-secondary">Suggest improvements</button>
+                        </div>
+                        <div id="notePreview" class="markdown-preview" style="margin:0 0 12px; padding:10px; border:1px solid #e5e7eb; border-radius:8px; background:#f9fafb; min-height:80px; white-space:pre-wrap;"></div>
                         <button type="submit" class="btn-module">Create Note</button>
                     </form>
                 </div>
@@ -178,6 +186,9 @@
             <h2>Files & Code</h2>
             <div class="files-panel">
                 <form id="uploadFileForm" class="upload-form">
+                    <select id="fileProjectSelect" style="width:100%; margin-bottom:12px; padding:10px; border-radius:8px; border:1px solid #d1d5db;">
+                        <option value="">Select a project</option>
+                    </select>
                     <input type="file" id="fileInput" />
                     <button class="btn-primary" type="submit">Upload</button>
                 </form>

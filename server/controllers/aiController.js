@@ -164,6 +164,97 @@ const fallbackComprehensionResponse = (text) => ({
   simplifiedText: `Main idea: ${text.substring(0, 160)}${text.length > 160 ? '...' : ''}`,
 });
 
+const explainNote = async (req, res) => {
+  try {
+    const { text } = req.body;
+
+    if (!text || !String(text).trim()) {
+      return res.status(400).json({ success: false, message: 'Please provide note text to explain.' });
+    }
+
+    const prompt = `
+      You are a helpful tutor and writing coach.
+      Explain the following note in simple, clear language for a learner.
+      Focus on the idea, key points, tone, and possible improvements.
+      Return only a JSON object with a single field named "explanation".
+
+      Note:
+      """
+      ${text}
+      """
+    `;
+
+    const aiResult = await sendToGeminiRaw(prompt, () => ({
+      explanation: `This note is about: ${String(text).slice(0, 200)}${String(text).length > 200 ? '...' : ''}. It can be improved by making the main point clearer, using shorter sentences, and adding examples where helpful.`,
+    }));
+
+    const explanation = typeof aiResult === 'string'
+      ? aiResult
+      : aiResult?.explanation || aiResult?.summary || `This note explains: ${String(text).slice(0, 220)}${String(text).length > 220 ? '...' : ''}`;
+
+    return res.status(200).json({ success: true, explanation });
+  } catch (error) {
+    console.error('Explain note error:', error);
+    return res.status(500).json({ success: false, message: 'Unable to explain the note right now.' });
+  }
+};
+
+const generateDocs = async (req, res) => {
+  try {
+    const { topic, context, projectName } = req.body;
+    const sourceTopic = topic || context || projectName || 'Project documentation';
+
+    if (!sourceTopic || !String(sourceTopic).trim()) {
+      return res.status(400).json({ success: false, message: 'Please provide a topic or project context for documentation.' });
+    }
+
+    const prompt = `
+      You are an expert technical writer.
+      Create concise but useful documentation for the following topic.
+      Return markdown only, with headings and bullet points where useful.
+      Include overview, key features, usage, and next steps.
+
+      Topic: ${sourceTopic}
+      Context: ${context || projectName || 'General project docs'}
+    `;
+
+    const aiResult = await sendToGeminiRaw(prompt, () => `# ${String(projectName || 'Project')} Documentation\n\n## Overview\nThis project includes important concepts, user flows, and deliverables for the current work.\n\n## Key points\n- Clarify the user goal\n- Document workflows and edge cases\n- Keep setup and usage steps practical\n`);
+
+    const content = typeof aiResult === 'string' ? aiResult : aiResult?.markdown || aiResult?.content || aiResult?.summary || 'Documentation is unavailable right now.';
+
+    return res.status(200).json({ success: true, content });
+  } catch (error) {
+    console.error('Generate docs error:', error);
+    return res.status(500).json({ success: false, message: 'Unable to generate documentation right now.' });
+  }
+};
+
+const generateReadme = async (req, res) => {
+  try {
+    const { projectName, description, notes, features } = req.body;
+    const prompt = `
+      You are a technical product writer.
+      Generate a polished README.md for this project.
+      Keep it readable, developer-friendly, and concise.
+      Return markdown only.
+
+      Project name: ${projectName || 'Untitled Project'}
+      Description: ${description || 'No description provided.'}
+      Additional notes: ${notes || ''}
+      Feature hints: ${features || ''}
+    `;
+
+    const aiResult = await sendToGeminiRaw(prompt, () => `# ${projectName || 'Project'}\n\n${description || 'A project built with FluentBuddy.'}\n\n## Features\n- AI-powered writing and explanation tools\n- Project-based collaboration and sharing\n- Notes, files, and analytics for learners and teams\n\n## Getting started\n1. Install dependencies\n2. Configure your environment\n3. Run the app and open the dashboard\n`);
+
+    const content = typeof aiResult === 'string' ? aiResult : aiResult?.markdown || aiResult?.content || aiResult?.summary || 'README is unavailable right now.';
+
+    return res.status(200).json({ success: true, content });
+  } catch (error) {
+    console.error('Generate readme error:', error);
+    return res.status(500).json({ success: false, message: 'Unable to generate the README right now.' });
+  }
+};
+
 const evaluateWriting = async (req, res) => {
   try {
     const { text } = req.body;
@@ -383,4 +474,7 @@ module.exports = {
   evaluateWriting,
   comprehensionAssist,
   explainCode,
+  explainNote,
+  generateDocs,
+  generateReadme,
 };

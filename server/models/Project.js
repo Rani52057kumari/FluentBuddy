@@ -30,6 +30,10 @@ const projectSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    shareReadmeOnly: {
+      type: Boolean,
+      default: false,
+    },
     publicSlug: {
       type: String,
       unique: true,

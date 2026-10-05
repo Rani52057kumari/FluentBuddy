@@ -211,6 +211,7 @@ const getProjectById = async (req, res) => {
 const generateProjectShareLink = async (req, res) => {
   try {
     const { id } = req.params;
+    const { shareReadmeOnly } = req.body || {};
     const project = await Project.findById(id);
 
     if (!project) {
@@ -230,8 +231,10 @@ const generateProjectShareLink = async (req, res) => {
     if (!project.publicSlug) {
       project.publicSlug = await generateProjectSlug();
       project.isPublic = true;
-      await project.save();
     }
+
+    project.shareReadmeOnly = Boolean(shareReadmeOnly);
+    await project.save();
 
     const shareUrl = `${process.env.APP_BASE_URL || 'http://localhost:3000'}/project/${project.publicSlug}`;
 
@@ -274,6 +277,7 @@ const getPublicProjectBySlug = async (req, res) => {
 
     const [notes, files] = await Promise.all([
       Note.find({
+        project: project._id,
         $or: [{ isPublic: true }, { owner: { $in: project.members } }, { members: { $in: project.members } }],
       })
         .populate('owner', 'name email')
@@ -281,12 +285,19 @@ const getPublicProjectBySlug = async (req, res) => {
         .sort({ createdAt: -1 })
         .lean(),
       FileMeta.find({
+        project: project._id,
         uploader: { $in: project.members },
       })
         .populate('uploader', 'name email')
         .sort({ createdAt: -1 })
         .lean(),
     ]);
+
+    const visibleNotes = project.shareReadmeOnly
+      ? notes.filter((note) => note.isPublic)
+      : notes.filter((note) => note.isPublic || String(note.owner?._id || note.owner) === String(project.owner) || (note.members || []).some((member) => String(member?._id || member) === String(project.owner)));
+
+    const visibleFiles = project.shareReadmeOnly ? files.filter((file) => file.originalName?.toLowerCase().includes('readme') || file.mimeType === 'text/markdown') : files;
 
     return res.status(200).json({
       success: true,
@@ -297,14 +308,15 @@ const getPublicProjectBySlug = async (req, res) => {
         owner: project.owner,
         members: project.members,
         isPublic: project.isPublic,
+        shareReadmeOnly: Boolean(project.shareReadmeOnly),
         publicSlug: project.publicSlug,
         createdAt: project.createdAt,
       },
-      notes: notes.filter((note) => note.isPublic || String(note.owner?._id || note.owner) === String(project.owner) || (note.members || []).some((member) => String(member?._id || member) === String(project.owner))),
-      files,
+      notes: visibleNotes,
+      files: visibleFiles,
       summary: {
-        totalNotes: notes.length,
-        totalFiles: files.length,
+        totalNotes: visibleNotes.length,
+        totalFiles: visibleFiles.length,
       },
     });
   } catch (error) {
